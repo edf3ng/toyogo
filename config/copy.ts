@@ -1,7 +1,7 @@
 export const COPY = {
   product: "ToyoGo",
   footer:
-    "Synthetic data — not actual Toyota Financial Services products or terms.",
+    "Synthetic data — not actual Toyota Financial Services products, pricing, or terms.",
   exampleTerms: "Example terms — synthetic data, not actual TFS policy.",
   modelledValue:
     "Modelled estimate, not market-sampled. No live listing sample is in this figure.",

@@ -1,6 +1,6 @@
 # ToyoGo
 
-A four-step look at the Toyota someone already has: what it is worth, what it costs to drive, and one next move. The numbers come from the engine in `lib/engine`. A language model, when configured, only restates those numbers.
+Should this Toyota switch to a hybrid or an EV? The engine in `lib/engine` computes the verdict. A language model, when configured, only restates those numbers.
 
 ## Run
 
@@ -14,10 +14,8 @@ npm test
 
 ## Demo
 
-Open the app on Elena (2023 Corolla, lease ending). Walk the four stops. On the last stop, switch “What matters most” to lowest emissions — the recommendation becomes the Prius Prime and shows a break-even. Switch the scenario to Income dip for the one-month extension. The one-page summary is in this browser tab only.
-
-The For Toyota page counts those three scenarios. It is labelled simulated.
+Open the verdict and switch Alex, Blair, and Casey. Alex gets a viable bZ4X, Blair a plug-in that covers about 76% of the day, and Casey a standard hybrid because charging is not available. Signing in accepts any password and does not store it.
 
 ## Honesty
 
-Every dollar is synthetic example data, not a Toyota Financial Services product or decision. Values are modelled, not sampled from listings. The car on screen is the supplied low-poly Corolla E80 (`source/Corolla.blend`, exported to `public/models/corolla.glb`). The archive did not include a licence. It is labelled a stylised illustration because an E80 is not the modern car in the scenario. Paint changes the material named `gray` on the body object only. Red on this model is a small lamp, and the gray on the wheels is the rim.
+Every dollar is synthetic example data, not a Toyota Financial Services product, price, or decision. Values are modelled, not sampled from listings. The car on screen is a stylised illustration, not the vehicle in the scenario.

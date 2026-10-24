@@ -7,9 +7,10 @@ import { useEffect, useState } from "react";
 import { clearDriver, readDriver } from "@/lib/driver";
 
 const LINKS = [
-  { href: "/", label: "The trip" },
+  { href: "/", label: "Start" },
+  { href: "/signup", label: "Your car" },
+  { href: "/dashboard", label: "Verdict" },
   { href: "/car", label: "The car" },
-  { href: "/value", label: "For Toyota" },
 ];
 
 export function SiteHeader() {
@@ -36,7 +37,7 @@ export function SiteHeader() {
       <div className="mx-auto flex w-full max-w-5xl flex-wrap items-end justify-between gap-3 px-4 py-3">
         <Link href="/" className="leading-tight">
           <span className="block text-xl font-semibold tracking-tight text-ink">ToyoGo</span>
-          <span className="text-xs text-muted">What is the next move for this Toyota</span>
+          <span className="text-xs text-muted">Hybrid or EV, from your own numbers</span>
         </Link>
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           {LINKS.map((link) => {

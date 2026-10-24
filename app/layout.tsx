@@ -11,7 +11,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: "ToyoGo",
-  description: "What your Toyota is worth, what it costs to drive, and the next move that fits.",
+  description: "Whether this Toyota should switch to a hybrid or an EV, from computed numbers.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
