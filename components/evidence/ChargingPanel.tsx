@@ -8,6 +8,16 @@ import type { SavedTrip } from "@/lib/trip";
 
 const ChargingMap = dynamic(() => import("@/components/ChargingMap"), { ssr: false });
 
+function milesApart(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return 3958.7613 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
 export function ChargingPanel({ trip }: { trip: SavedTrip }) {
   const [miles, setMiles] = useState(10);
   const [center, setCenter] = useState({ lat: 30.267, lon: -97.743, place: trip.place || "Austin" });
@@ -29,17 +39,22 @@ export function ChargingPanel({ trip }: { trip: SavedTrip }) {
 
   useEffect(() => {
     if (hybrid) return;
-    const timer = window.setTimeout(() => {
-      fetch(`/api/chargers?lat=${center.lat}&lon=${center.lon}&miles=${miles}`)
-        .then((response) => response.json())
-        .then((body: { stations?: ChargerPin[]; source?: string }) => {
-          setStations(body.stations ?? []);
-          setSource(body.source ?? "cache");
-        })
-        .catch(() => undefined);
-    }, 200);
-    return () => window.clearTimeout(timer);
-  }, [center.lat, center.lon, hybrid, miles]);
+    const controller = new AbortController();
+    fetch(`/api/chargers?lat=${center.lat}&lon=${center.lon}&miles=30`, { signal: controller.signal })
+      .then((response) => response.json())
+      .then((body: { stations?: ChargerPin[]; source?: string }) => {
+        setStations(body.stations ?? []);
+        setSource(body.source ?? "cache");
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+      });
+    return () => controller.abort();
+  }, [center.lat, center.lon, hybrid]);
+
+  const visible = stations.filter(
+    (station) => milesApart(center.lat, center.lon, station.lat, station.lon) <= miles + 0.05,
+  );
 
   if (hybrid) {
     return (
@@ -69,9 +84,9 @@ export function ChargingPanel({ trip }: { trip: SavedTrip }) {
         />
       </label>
       <div className="mt-4 overflow-hidden border border-line">
-        <ChargingMap lat={center.lat} lon={center.lon} stations={stations} height={280} />
+        <ChargingMap lat={center.lat} lon={center.lon} miles={miles} stations={visible} height={280} />
       </div>
-      <p className="mt-2 text-sm text-muted">{stations.length} stations in this search.</p>
+      <p className="mt-2 text-sm text-muted">{visible.length} stations in this search.</p>
     </div>
   );
 }
