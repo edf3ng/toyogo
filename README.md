@@ -1,4 +1,4 @@
-# NextMove
+# ToyoGo
 
 A four-step look at the Toyota someone already has: what it is worth, what it costs to drive, and one next move. The numbers come from the engine in `lib/engine`. A language model, when configured, only restates those numbers.
 

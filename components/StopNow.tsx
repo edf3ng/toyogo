@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { COPY } from "@/config/copy";
 import { DollarInput, Field, SelectInput, TextInput } from "@/components/Field";
 import { formatDollars } from "@/lib/format";
@@ -66,6 +67,20 @@ export function StopNow({
 
   return (
     <section>
+      <figure className="mb-5">
+        <div className="relative h-44 w-full border border-line">
+          <Image
+            src="/images/roadmap.jpg"
+            alt="A folded road map on a passenger seat."
+            fill
+            sizes="(min-width: 768px) 48rem, 100vw"
+            className="object-cover"
+          />
+        </div>
+        <figcaption className="mt-1 text-sm text-muted">
+          The trip starts with the Toyota already in the driveway.
+        </figcaption>
+      </figure>
       <h1 className="text-2xl font-semibold tracking-tight">Where you are now</h1>
       <p className="mt-2 text-sm text-muted">
         Year, model, and trim come from FuelEconomy.gov, so only a real combination can be picked.

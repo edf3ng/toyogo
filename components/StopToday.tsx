@@ -1,6 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { COPY } from "@/config/copy";
 import { PAINTS } from "@/config/vehicles";
 import { Assumptions } from "@/components/Assumptions";
@@ -12,7 +13,7 @@ import type { Recommendation } from "@/types";
 
 const VehicleViewer = dynamic(() => import("@/components/VehicleViewer"), {
   ssr: false,
-  loading: () => <VehicleSilhouette />,
+  loading: () => <VehicleSilhouette className="h-96" />,
 });
 
 export function StopToday({
@@ -40,8 +41,13 @@ export function StopToday({
       </p>
 
       <div className="mt-5">
-        <VehicleViewer paint={paint.hex} />
-        <p className="mt-2 text-sm text-muted">{COPY.stylisedVehicle}</p>
+        <VehicleViewer paint={paint.hex} frame="trip" />
+        <p className="mt-2 text-sm text-muted">
+          {COPY.stylisedVehicle}{" "}
+          <Link href="/car" className="text-jade-800">
+            Open the larger model
+          </Link>
+        </p>
         <div className="mt-3 flex flex-wrap gap-2">
           {PAINTS.map((swatch) => (
             <button

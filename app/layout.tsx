@@ -10,7 +10,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "NextMove",
+  title: "ToyoGo",
   description: "What your Toyota is worth, what it costs to drive, and the next move that fits.",
 };
 
@@ -18,10 +18,10 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased`}>
-        <div className="mx-auto flex min-h-dvh max-w-2xl flex-col px-4">
+        <div className="flex min-h-dvh flex-col">
           <SiteHeader />
-          <div className="flex-1 py-6">{children}</div>
-          <footer className="border-t border-line py-4 text-sm text-muted print:hidden">
+          <div className="mx-auto w-full max-w-5xl flex-1 px-4 py-6">{children}</div>
+          <footer className="mx-auto w-full max-w-5xl border-t border-line px-4 py-4 text-sm text-muted print:hidden">
             <p>{COPY.footer}</p>
             <p className="mt-1">{COPY.modelCredit}</p>
           </footer>

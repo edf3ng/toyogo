@@ -37,7 +37,7 @@ export default function HandoffPage() {
   return (
     <article>
       <p className="text-sm text-muted">{COPY.exampleTerms}</p>
-      <h1 className="mt-2 text-2xl font-semibold tracking-tight">NextMove summary</h1>
+      <h1 className="mt-2 text-2xl font-semibold tracking-tight">ToyoGo summary</h1>
       <p className="mt-1 text-sm">{snapshot.who}</p>
 
       <h2 className="mt-6 text-base font-semibold">Situation</h2>

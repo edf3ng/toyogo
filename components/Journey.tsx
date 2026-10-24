@@ -199,7 +199,7 @@ export function Journey() {
   }
 
   return (
-    <div>
+    <div className="mx-auto max-w-3xl">
       <div className="no-print mb-4">
         <label className="block text-sm">
           <span className="mb-1 block text-muted">Scenario</span>

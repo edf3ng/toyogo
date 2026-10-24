@@ -1,5 +1,5 @@
 export const COPY = {
-  product: "NextMove",
+  product: "ToyoGo",
   footer:
     "Synthetic data — not actual Toyota Financial Services products or terms.",
   exampleTerms: "Example terms — synthetic data, not actual TFS policy.",

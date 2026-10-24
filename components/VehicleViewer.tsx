@@ -26,7 +26,7 @@ function onBody(object: THREE.Object3D): boolean {
   return false;
 }
 
-function Car({ paint }: { paint: string }) {
+function Car({ paint, frame }: { paint: string; frame: "trip" | "stage" }) {
   const gltf = useGLTF("/models/corolla.glb");
   const scene = useMemo(() => {
     const cloned = gltf.scene.clone(true);
@@ -55,11 +55,13 @@ function Car({ paint }: { paint: string }) {
 
   const wheels = useRef<THREE.Object3D[]>([]);
   useLayoutEffect(() => {
+    scene.scale.setScalar(1);
+    scene.position.set(0, 0, 0);
     const box = new THREE.Box3().setFromObject(scene);
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     const longest = Math.max(size.x, size.y, size.z) || 1;
-    const scale = 3.4 / longest;
+    const scale = (frame === "stage" ? 4.8 : 4.2) / longest;
     scene.scale.setScalar(scale);
     scene.position.set(
       -center.x * scale,
@@ -71,7 +73,7 @@ function Car({ paint }: { paint: string }) {
       if (WHEEL_NAMES.has(object.name)) found.push(object);
     });
     wheels.current = found;
-  }, [scene]);
+  }, [scene, frame]);
 
   useFrame((_, delta) => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -83,29 +85,48 @@ function Car({ paint }: { paint: string }) {
   return <primitive object={scene} />;
 }
 
-export default function VehicleViewer({ paint }: { paint: string }) {
+export default function VehicleViewer({
+  paint,
+  frame = "trip",
+}: {
+  paint: string;
+  frame?: "trip" | "stage";
+}) {
   const [reduced, setReduced] = useState(false);
   useEffect(() => {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   }, []);
+  const stage = frame === "stage";
 
   return (
-    <div className="h-64 w-full border border-line bg-[#f3f0ea]">
-      <Canvas camera={{ position: [4.2, 1.8, 4.6], fov: 35 }} dpr={[1, 1.5]}>
+    <div
+      className={`w-full border border-line bg-[#efeae2] ${
+        stage ? "h-[70vh] min-h-[32rem]" : "h-96"
+      }`}
+    >
+      <Canvas
+        key={frame}
+        camera={{
+          position: stage ? [5.1, 1.9, 5.4] : [4.6, 1.75, 4.9],
+          fov: 30,
+        }}
+        dpr={[1, 1.5]}
+      >
+        <color attach="background" args={["#efeae2"]} />
         <ambientLight intensity={0.9} />
         <directionalLight position={[4, 6, 3]} intensity={1.05} />
         <Suspense fallback={null}>
-          <Car paint={paint} />
+          <Car paint={paint} frame={frame} />
         </Suspense>
         <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-          <circleGeometry args={[2.4, 48]} />
+          <circleGeometry args={[stage ? 3.4 : 2.8, 48]} />
           <meshStandardMaterial color="#d7d1c7" />
         </mesh>
         <OrbitControls
           autoRotate={!reduced}
           autoRotateSpeed={0.6}
           enablePan={false}
-          target={[0, 0.55, 0]}
+          target={[0, stage ? 0.7 : 0.6, 0]}
         />
       </Canvas>
     </div>

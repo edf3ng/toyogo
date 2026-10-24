@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { PERSONAS, analysisFor } from "@/data/personas";
 import { recommend } from "@/lib/engine/recommend";
@@ -21,6 +22,20 @@ export default function ValuePage() {
 
   return (
     <section>
+      <figure className="mb-5">
+        <div className="relative h-48 w-full border border-line">
+          <Image
+            src="/images/reststop.jpg"
+            alt="A highway rest stop at the edge of the road."
+            fill
+            sizes="(min-width: 1024px) 64rem, 100vw"
+            className="object-cover"
+          />
+        </div>
+        <figcaption className="mt-1 text-sm text-muted">
+          Three scenarios from one afternoon on the road.
+        </figcaption>
+      </figure>
       <h1 className="text-2xl font-semibold tracking-tight">What this session would do</h1>
       <p className="mt-2 text-sm text-muted">
         Simulated — illustrative only. Counts are the three built-in scenarios run through the

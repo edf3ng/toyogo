@@ -19,9 +19,13 @@ export function Stepper({
   return (
     <div className="no-print mb-6">
       <div className="relative pt-6">
-        <div className="absolute top-8 right-3 left-3 h-1 rounded-full bg-road" />
+        <div className="absolute top-7 right-2 left-2 h-3">
+          <div className="relative h-full bg-road">
+            <div className="absolute inset-x-3 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-amber" />
+          </div>
+        </div>
         <motion.div
-          className="absolute top-5 h-4 w-7 -translate-x-1/2"
+          className="absolute top-4 h-5 w-9 -translate-x-1/2"
           animate={{ left: STEPS[step - 1].at }}
           transition={{ duration: 0.35, ease: "easeOut" }}
           aria-hidden
@@ -41,11 +45,11 @@ export function Stepper({
             return (
               <li key={item.id} className="text-center text-sm">
                 {done ? (
-                  <button type="button" className="w-full pt-5" onClick={() => onJump(item.id)}>
+                  <button type="button" className="w-full pt-8" onClick={() => onJump(item.id)}>
                     {label}
                   </button>
                 ) : (
-                  <div className="pt-5">{label}</div>
+                  <div className="pt-8">{label}</div>
                 )}
               </li>
             );
@@ -58,7 +62,7 @@ export function Stepper({
 
 function CarMark() {
   return (
-    <svg viewBox="0 0 28 16" className="h-4 w-7 text-paper">
+    <svg viewBox="0 0 28 16" className="h-5 w-9">
       <path fill="#2e3440" d="M3 11h2l2-4h10l3 3h4v3H3v-2z" />
       <circle cx="8" cy="12" r="1.4" fill="#fdfbf7" />
       <circle cx="20" cy="12" r="1.4" fill="#fdfbf7" />
