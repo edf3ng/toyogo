@@ -1,13 +1,11 @@
-import dynamic from "next/dynamic";
 import Link from "next/link";
+import { HomeCar } from "@/components/HomeCar";
 import { COPY } from "@/config/copy";
-
-const VehicleViewer = dynamic(() => import("@/components/VehicleViewer"), { ssr: false });
 
 export default function Home() {
   return (
     <section className="mx-auto max-w-3xl">
-      <VehicleViewer paint="#1F4E79" frame="trip" />
+      <HomeCar />
       <p className="mt-2 text-sm text-muted">{COPY.stylisedVehicle}</p>
       <h1 className="mt-6 text-2xl font-semibold tracking-tight">
         Should this Toyota switch to a hybrid or an EV?

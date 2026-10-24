@@ -18,10 +18,10 @@ export default function CarPage() {
 
   return (
     <section>
-      <h1 className="text-2xl font-semibold tracking-tight">The Corolla</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">The illustration</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">
         Drag to turn it. The paint swatches change the body only. Glass, lamps, and the wheels stay
-        as they were exported.
+        as they were modelled. CC0 car by Quaternius.
       </p>
       <div className="mt-5">
         <VehicleViewer paint={paint.hex} frame="stage" />
@@ -45,12 +45,11 @@ export default function CarPage() {
       <div className="mt-6 max-w-2xl border-t border-line pt-4 text-sm">
         <p>{COPY.modelCredit}</p>
         <p className="mt-2 text-muted">
-          An E80 is an older Corolla than the cars in the three scenarios. It is here so the trip
-          has one model to turn, not because Elena drives this body.
+          One model stands in for every Toyota in the demo. It is not the car being scored.
         </p>
         <p className="mt-4">
           <Link href="/" className="text-jade-800">
-            Back to the trip
+            Back to the start
           </Link>
         </p>
       </div>

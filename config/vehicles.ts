@@ -1,11 +1,10 @@
 import type { Cents } from "@/types";
 
 /**
- * Body paint on the exported E80. The body mesh also carries black, glass,
- * white, red, and orange; red is a 12-vertex lamp, and gray on the tires is
- * the rim. The viewer recolours gray only under the body object, which the export names corolla_body.
+ * Body paint on the Quaternius car. "Blue" is the body shell. Grey and Black
+ * are also on the wheels, so the viewer recolours Blue only.
  */
-export const BODY_MATERIAL_NAME = "gray";
+export const BODY_MATERIAL_NAME = "Blue";
 
 export interface PaintSwatch {
   id: string;

@@ -9,18 +9,15 @@ import { BODY_MATERIAL_NAME } from "@/config/vehicles";
 useGLTF.preload("/models/corolla.glb");
 
 const WHEEL_NAMES = new Set([
-  "corolla L front tire",
-  "corolla R front tire",
-  "corolla back tires",
-  "corolla_L_front_tire",
-  "corolla_R_front_tire",
-  "corolla_back_tires",
+  "NormalCar1_BackWheels_Cube.011",
+  "NormalCar1_FrontLeftWheel_Cube.007",
+  "NormalCar1_FrontRightWheel_Cube.008",
 ]);
 
 function onBody(object: THREE.Object3D): boolean {
   let current: THREE.Object3D | null = object;
   while (current) {
-    if (current.name === "corolla body" || current.name === "corolla_body") return true;
+    if (current.name.startsWith("NormalCar1_Cube")) return true;
     current = current.parent;
   }
   return false;
@@ -78,7 +75,7 @@ function Car({ paint, frame }: { paint: string; frame: "trip" | "stage" }) {
   useFrame((_, delta) => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     for (const wheel of wheels.current) {
-      wheel.rotation.z -= delta * 1.1;
+      wheel.rotation.x -= delta * 1.1;
     }
   });
 

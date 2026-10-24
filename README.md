@@ -18,4 +18,4 @@ Open the verdict and switch Alex, Blair, and Casey. Alex gets a viable bZ4X, Bla
 
 ## Honesty
 
-Every dollar is synthetic example data, not a Toyota Financial Services product, price, or decision. Values are modelled, not sampled from listings. The car on screen is a stylised illustration, not the vehicle in the scenario.
+Every dollar is synthetic example data, not a Toyota Financial Services product, price, or decision. Values are modelled, not sampled from listings. The car on screen is a CC0 model by Quaternius, a stylised illustration, not the vehicle in the scenario. Paint changes the material named Blue.
