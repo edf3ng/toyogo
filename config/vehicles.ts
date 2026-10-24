@@ -1,7 +1,11 @@
 import type { Cents } from "@/types";
 
-/** The glTF material the viewer recolours. Glass, tires, and trim use other names. */
-export const BODY_MATERIAL_NAME = "red";
+/**
+ * Body paint on the exported E80. The body mesh also carries black, glass,
+ * white, red, and orange; red is a 12-vertex lamp, and gray on the tires is
+ * the rim. The viewer recolours gray only under the body object, which the export names corolla_body.
+ */
+export const BODY_MATERIAL_NAME = "gray";
 
 export interface PaintSwatch {
   id: string;

@@ -7,7 +7,7 @@ export const COPY = {
     "Modelled estimate, not market-sampled. No live listing sample is in this figure.",
   stylisedVehicle: "Stylised illustration — not your actual vehicle.",
   modelCredit:
-    "The spinning car is an original low-poly illustration made for this demo. It is not a Toyota asset and it is not the car you drive.",
+    "The car is a supplied low-poly Corolla E80. The archive did not include a licence, so it is shown as a stylised illustration — not a Toyota asset, and not the car in the scenario.",
   tailpipe:
     "Tailpipe only. A battery-electric vehicle still has upstream emissions from generating electricity. The EPA figure here is 0 grams at the tailpipe.",
   phevShare:

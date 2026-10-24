@@ -10,7 +10,7 @@ export interface AssumptionRow {
   note: string;
 }
 
-export function assumptionRows(electricityCents = FUEL.electricityRateCentsPerKwh): AssumptionRow[] {
+export function assumptionRows(electricityCents: number = FUEL.electricityRateCentsPerKwh): AssumptionRow[] {
   return [
     {
       label: "Value left after year one",
