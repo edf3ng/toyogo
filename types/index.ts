@@ -101,6 +101,7 @@ export interface ValuationResult {
   retailLowCents: Cents;
   retailHighCents: Cents;
   tradeInCents: Cents;
+  conditionDeductionCents: Cents;
   modelled: true;
 }
 

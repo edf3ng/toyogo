@@ -22,3 +22,18 @@ export const VALUATION = {
    */
   equityForfeitFloorCents: 20_000,
 } as const;
+
+/** Example deductions, in cents, for condition notes the driver checked. */
+export const CONDITION_CENTS = {
+  accident: 80_000,
+  tires: 40_000,
+  brakes: 30_000,
+  warning: 50_000,
+} as const;
+
+export function conditionDeductionCents(issues: readonly string[] = []): number {
+  return issues.reduce((sum, issue) => {
+    const deduction = CONDITION_CENTS[issue as keyof typeof CONDITION_CENTS];
+    return sum + (deduction ?? 0);
+  }, 0);
+}

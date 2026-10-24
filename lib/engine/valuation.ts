@@ -1,4 +1,4 @@
-import { VALUATION } from "@/config/valuation";
+import { conditionDeductionCents, VALUATION } from "@/config/valuation";
 import type { Cents, ValuationResult } from "@/types";
 
 /**
@@ -28,14 +28,20 @@ export function valueVehicle(
   msrpCents: Cents,
   ageYears: number,
   actualMiles: number,
+  issues: readonly string[] = [],
 ): ValuationResult {
   const retention = retentionFactor(ageYears);
   const mileageAdjustment = mileageAdjustmentCents(actualMiles, ageYears);
-  const baseValueCents = Math.max(0, Math.round(msrpCents * retention) + mileageAdjustment);
+  const conditionDeduction = conditionDeductionCents(issues);
+  const baseValueCents = Math.max(
+    0,
+    Math.round(msrpCents * retention) + mileageAdjustment - conditionDeduction,
+  );
   return {
     ageYears,
     retention,
     mileageAdjustmentCents: mileageAdjustment,
+    conditionDeductionCents: conditionDeduction,
     baseValueCents,
     retailLowCents: Math.round(baseValueCents * VALUATION.retailLowFactor),
     retailHighCents: Math.round(baseValueCents * VALUATION.retailHighFactor),
