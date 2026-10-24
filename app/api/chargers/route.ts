@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), 3000);
-    const url = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${lat}&longitude=${lon}&distance=${miles}&distanceunit=Miles&maxresults=40&compact=true&verbose=false`;
+    const url = `https://api.openchargemap.io/v3/poi/?output=json&latitude=${lat}&longitude=${lon}&distance=${miles}&distanceunit=Miles&maxresults=1000&compact=true&verbose=false`;
     const response = await fetch(url, {
       headers: { "X-API-Key": key, Accept: "application/json", "User-Agent": "ToyoGo/1.0" },
       signal: controller.signal,
