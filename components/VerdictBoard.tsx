@@ -30,6 +30,7 @@ function paybackLabel(months: number): string {
 }
 
 function limitingSentence(option: RankedSwitch): string {
+  if (option.verdict === "viable") return "Every gate that applies is in good shape.";
   switch (option.limiting) {
     case "charging":
       return "Charging is the limit. A plug needs a home charger or stations nearby.";
@@ -181,7 +182,9 @@ function WhyDrawer({ result }: { result: SwitchResult }) {
       <p className="mt-3 text-sm text-muted">
         Each gate is 0 to 1. Under 0.4 the verdict is Not yet. All applicable gates at 0.7 or
         above, and a plug-in range that covers the day, is Viable.
-        {option.limiting ? ` The lowest gate is ${option.limiting}.` : ""}
+        {option.verdict !== "viable" && option.limiting
+          ? ` The lowest gate is ${option.limiting}.`
+          : ""}
       </p>
       <ul className="mt-3 grid gap-2 text-sm">
         {rows.map(([label, key, value]) => (
@@ -189,7 +192,7 @@ function WhyDrawer({ result }: { result: SwitchResult }) {
             <span>{label}</span>
             <span className="font-medium">
               {value === null ? "Not applicable" : value.toFixed(2)}
-              {option.limiting === key ? " · limiting" : ""}
+              {option.verdict !== "viable" && option.limiting === key ? " · limiting" : ""}
             </span>
           </li>
         ))}
