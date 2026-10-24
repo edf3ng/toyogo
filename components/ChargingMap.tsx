@@ -16,13 +16,15 @@ export default function ChargingMap({
   lat,
   lon,
   stations,
+  height = 360,
 }: {
   lat: number;
   lon: number;
   stations: ChargerPin[];
+  height?: number;
 }) {
   return (
-    <MapContainer center={[lat, lon]} zoom={12} scrollWheelZoom={false} style={{ height: 360, width: "100%" }}>
+    <MapContainer center={[lat, lon]} zoom={12} scrollWheelZoom={false} style={{ height, width: "100%" }}>
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

@@ -1,10 +1,7 @@
 import type { Cents } from "@/types";
 
-/**
- * Body paint on the Quaternius car. "Blue" is the body shell. Grey and Black
- * are also on the wheels, so the viewer recolours Blue only.
- */
-export const BODY_MATERIAL_NAME = "Blue";
+/** Body paint on the supplied Camry. Only this material is recoloured. */
+export const BODY_MATERIAL_NAME = "CarPaint";
 
 export interface PaintSwatch {
   id: string;

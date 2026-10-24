@@ -7,7 +7,7 @@ export const COPY = {
     "Modelled estimate, not market-sampled. No live listing sample is in this figure.",
   stylisedVehicle: "Stylised illustration — not your actual vehicle.",
   modelCredit:
-    "The car is a CC0 model by Quaternius (Poly Pizza). It is a stylised illustration — not a Toyota asset, and not the car in the scenario.",
+    "The car is a supplied 2025 Camry model. It is an illustration — not your actual vehicle, and not a Toyota Financial Services asset.",
   tailpipe:
     "Tailpipe only. A battery-electric vehicle still has upstream emissions from generating electricity. The EPA figure here is 0 grams at the tailpipe.",
   phevShare:

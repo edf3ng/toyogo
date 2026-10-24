@@ -32,7 +32,7 @@ export default function LoginPage() {
           const local = address.split("@")[0]?.replace(/[._-]+/g, " ").trim() || "Driver";
           const name = local.charAt(0).toUpperCase() + local.slice(1);
           writeDriver({ name, email: address });
-          router.push(readTrip() ? "/drive" : "/signup");
+          router.push(readTrip() ? "/dashboard" : "/signup");
         }}
       >
         <Field label="Email">

@@ -136,7 +136,7 @@ export function SignupWizard() {
     });
     setVin("");
     writeTrip(saved);
-    router.push("/drive");
+    router.push("/dashboard");
   }
 
   const stop = STOPS[step];

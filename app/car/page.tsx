@@ -21,7 +21,7 @@ export default function CarPage() {
       <h1 className="text-2xl font-semibold tracking-tight">The illustration</h1>
       <p className="mt-2 max-w-2xl text-sm text-muted">
         Drag to turn it. The paint swatches change the body only. Glass, lamps, and the wheels stay
-        as they were modelled. CC0 car by Quaternius.
+        as they were modelled. Supplied 2025 Camry model.
       </p>
       <div className="mt-5">
         <VehicleViewer paint={paint.hex} frame="stage" />

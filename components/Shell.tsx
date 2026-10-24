@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { COPY } from "@/config/copy";
 
-const FULL_BLEED = new Set(["/", "/drive"]);
+const FULL_BLEED = new Set(["/", "/dashboard"]);
 
 export function Shell({ children }: { children: ReactNode }) {
   const path = usePathname();
