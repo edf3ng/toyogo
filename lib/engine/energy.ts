@@ -34,7 +34,7 @@ export function canCharge(access: ChargeAccess): boolean {
 
 export function annualMilesFromDaily(
   dailyMiles: number,
-  drivingDays = ENERGY.drivingDaysPerYear,
+  drivingDays: number = ENERGY.drivingDaysPerYear,
 ): number {
   return Math.max(0, dailyMiles) * drivingDays;
 }
