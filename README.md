@@ -14,7 +14,7 @@ npm test
 
 ## Demo
 
-Open the verdict and switch Alex, Blair, and Casey. Alex gets a viable bZ4X, Blair a plug-in that covers about 76% of the day, and Casey a standard hybrid because charging is not available. Signing in accepts any password and does not store it.
+Sign up with your own Toyota. The road scrolls to a recommendations sign, then the dashboard compares a standard hybrid, a plug-in, and a battery EV. Signing in accepts any password and does not store it.
 
 ## Honesty
 

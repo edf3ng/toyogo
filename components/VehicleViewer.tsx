@@ -23,7 +23,17 @@ function onBody(object: THREE.Object3D): boolean {
   return false;
 }
 
-function Car({ paint, frame }: { paint: string; frame: "trip" | "stage" }) {
+function Car({
+  paint,
+  frame,
+  rolling,
+  compact,
+}: {
+  paint: string;
+  frame: "trip" | "stage" | "hero";
+  rolling: boolean;
+  compact: boolean;
+}) {
   const gltf = useGLTF("/models/corolla.glb");
   const scene = useMemo(() => {
     const cloned = gltf.scene.clone(true);
@@ -58,7 +68,8 @@ function Car({ paint, frame }: { paint: string; frame: "trip" | "stage" }) {
     const size = box.getSize(new THREE.Vector3());
     const center = box.getCenter(new THREE.Vector3());
     const longest = Math.max(size.x, size.y, size.z) || 1;
-    const scale = (frame === "stage" ? 4.8 : 4.2) / longest;
+    const fit = frame === "hero" ? (compact ? 4 : 6.2) : frame === "stage" ? 4.8 : 4.2;
+    const scale = fit / longest;
     scene.scale.setScalar(scale);
     scene.position.set(
       -center.x * scale,
@@ -70,12 +81,12 @@ function Car({ paint, frame }: { paint: string; frame: "trip" | "stage" }) {
       if (WHEEL_NAMES.has(object.name)) found.push(object);
     });
     wheels.current = found;
-  }, [scene, frame]);
+  }, [compact, frame, scene]);
 
   useFrame((_, delta) => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     for (const wheel of wheels.current) {
-      wheel.rotation.x -= delta * 1.1;
+      wheel.rotation.x -= delta * (rolling ? 7 : 1.1);
     }
   });
 
@@ -85,45 +96,64 @@ function Car({ paint, frame }: { paint: string; frame: "trip" | "stage" }) {
 export default function VehicleViewer({
   paint,
   frame = "trip",
+  circling = false,
+  rolling = false,
+  profile = false,
 }: {
   paint: string;
-  frame?: "trip" | "stage";
+  frame?: "trip" | "stage" | "hero";
+  circling?: boolean;
+  rolling?: boolean;
+  profile?: boolean;
 }) {
   const [reduced, setReduced] = useState(false);
+  const [compact, setCompact] = useState(() => typeof window !== "undefined" && window.innerWidth < 700);
   useEffect(() => {
     setReduced(window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+    const update = () => setCompact(window.innerWidth < 700);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
+  const hero = frame === "hero";
   const stage = frame === "stage";
 
   return (
     <div
-      className={`w-full border border-line bg-[#efeae2] ${
-        stage ? "h-[70vh] min-h-[32rem]" : "h-96"
-      }`}
+      className={
+        hero
+          ? "h-full w-full"
+          : `w-full border border-line bg-[#efeae2] ${stage ? "h-[70vh] min-h-[32rem]" : "h-96"}`
+      }
     >
       <Canvas
-        key={frame}
+        key={`${frame}-${profile ? "side" : "three"}`}
         camera={{
-          position: stage ? [5.1, 1.9, 5.4] : [4.6, 1.75, 4.9],
-          fov: 30,
+          position: profile ? [-9.2, 1.45, 0.2] : stage ? [5.1, 1.9, 5.4] : hero ? [6.4, 1.85, 7.4] : [4.6, 1.75, 4.9],
+          fov: hero ? 28 : 30,
         }}
         dpr={[1, 1.5]}
+        gl={hero ? { alpha: true } : undefined}
+        onCreated={hero ? ({ gl }) => gl.setClearColor(0x000000, 0) : undefined}
       >
-        <color attach="background" args={["#efeae2"]} />
-        <ambientLight intensity={0.9} />
-        <directionalLight position={[4, 6, 3]} intensity={1.05} />
+        {hero ? null : <color attach="background" args={["#efeae2"]} />}
+        <ambientLight intensity={0.95} />
+        <directionalLight position={[4, 6, 3]} intensity={1.15} />
         <Suspense fallback={null}>
-          <Car paint={paint} frame={frame} />
+          <Car paint={paint} frame={frame} rolling={rolling} compact={compact} />
         </Suspense>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
-          <circleGeometry args={[stage ? 3.4 : 2.8, 48]} />
-          <meshStandardMaterial color="#d7d1c7" />
-        </mesh>
+        {hero ? null : (
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]}>
+            <circleGeometry args={[stage ? 3.4 : 2.8, 48]} />
+            <meshStandardMaterial color="#d7d1c7" />
+          </mesh>
+        )}
         <OrbitControls
-          autoRotate={!reduced}
-          autoRotateSpeed={0.6}
+          autoRotate={circling && !reduced}
+          autoRotateSpeed={0.7}
           enablePan={false}
-          target={[0, stage ? 0.7 : 0.6, 0]}
+          enableZoom={!hero}
+          target={[0, hero ? 1.15 : stage ? 0.7 : 0.6, 0]}
         />
       </Canvas>
     </div>

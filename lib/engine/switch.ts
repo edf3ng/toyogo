@@ -50,6 +50,8 @@ export interface SwitchInput {
   gasDollarsPerGallon: number;
   electricityCentsPerKwh: number;
   issues?: readonly string[];
+  /** Payment the driver typed. Used when it is present, instead of the amortised figure. */
+  statedPaymentCents?: Cents;
   apr?: number;
   termMonths?: number;
   /** Override the class filter when a test wants the full lineup. */
@@ -165,7 +167,10 @@ export function recommendSwitch(input: SwitchInput): SwitchResult {
     input.issues ?? [],
   );
   const payoff = payoffCents(input.contract);
-  const paymentNow = currentPaymentCents(input.contract);
+  const paymentNow =
+    input.statedPaymentCents && input.statedPaymentCents > 0
+      ? Math.round(input.statedPaymentCents)
+      : currentPaymentCents(input.contract);
   const equity = valuation.tradeInCents - payoff;
   const weights = weightsForRank(input.priorities);
   const lineup = input.candidates ?? candidatesFor(input.current.model);

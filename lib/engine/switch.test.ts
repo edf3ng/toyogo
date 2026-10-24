@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { DRIVERS } from "@/data/drivers";
 import { priceDeal } from "@/lib/engine/deal";
 import { energyCost, paybackMonths } from "@/lib/engine/energy";
-import { recommendSwitch } from "@/lib/engine/switch";
+import { recommendSwitch, type SwitchInput } from "@/lib/engine/switch";
 
 describe("energy", () => {
   it("keeps a standard hybrid on petrol", () => {
@@ -89,24 +88,102 @@ describe("deal", () => {
   });
 });
 
-describe("the three drivers", () => {
-  it("sends Alex to a viable battery EV", () => {
-    const result = recommendSwitch(DRIVERS[0].input);
+const AS_OF = "2026-10-24";
+
+function scene(partial: Omit<SwitchInput, "asOf" | "mix" | "cashDownCents" | "gasDollarsPerGallon" | "electricityCentsPerKwh"> & { mix?: SwitchInput["mix"] }): SwitchInput {
+  return {
+    asOf: AS_OF,
+    mix: partial.mix ?? "mix",
+    cashDownCents: 0,
+    gasDollarsPerGallon: 4.28,
+    electricityCentsPerKwh: 14.5,
+    ...partial,
+  };
+}
+
+describe("three different drives", () => {
+  it("sends a short commute with home charging to a viable battery EV", () => {
+    const result = recommendSwitch(
+      scene({
+        current: {
+          id: "40241",
+          year: 2019,
+          model: "Corolla",
+          cityMpg: 28,
+          highwayMpg: 36,
+          co2TailpipeGpm: 281,
+          msrpCents: 2_350_000,
+          miles: 68_000,
+        },
+        contract: { kind: "owned" },
+        dailyMiles: 22,
+        chargeAccess: "yes",
+        stationCount: 12,
+        budgetCents: 90_000,
+        priorities: ["co2", "fuel", "payment", "total", "practical", "performance"],
+      }),
+    );
     expect(result.winner.powertrain).toBe("bev");
     expect(result.winner.verdict).toBe("viable");
     expect(result.winner.label).toMatch(/bZ4X/);
   });
 
-  it("sends Blair to a plug-in with a caveat, covering about 76% of the day", () => {
-    const result = recommendSwitch(DRIVERS[1].input);
+  it("sends a day longer than the plug-in range to a plug-in with a caveat", () => {
+    const result = recommendSwitch(
+      scene({
+        current: {
+          id: "42959",
+          year: 2021,
+          model: "RAV4",
+          cityMpg: 27,
+          highwayMpg: 35,
+          co2TailpipeGpm: 296,
+          msrpCents: 3_280_000,
+          miles: 44_000,
+          cargoCuFt: 37,
+          horsepower: 203,
+        },
+        contract: {
+          kind: "loan",
+          principalCents: 3_280_000,
+          annualRate: 0.049,
+          months: 60,
+          monthsElapsed: 38,
+        },
+        dailyMiles: 55,
+        chargeAccess: "yes",
+        stationCount: 12,
+        budgetCents: 90_000,
+        priorities: ["fuel", "co2", "performance", "practical", "payment", "total"],
+      }),
+    );
     expect(result.winner.powertrain).toBe("phev");
     expect(result.winner.verdict).toBe("caveats");
     expect(result.winner.electricShare).toBeCloseTo(42 / 55, 2);
     expect(result.winner.limiting).toBe("daily");
   });
 
-  it("sends Casey to a standard hybrid because charging fails", () => {
-    const result = recommendSwitch(DRIVERS[2].input);
+  it("sends a drive with no charging to a standard hybrid", () => {
+    const result = recommendSwitch(
+      scene({
+        current: {
+          id: "38880",
+          year: 2018,
+          model: "Camry",
+          cityMpg: 29,
+          highwayMpg: 41,
+          co2TailpipeGpm: 264,
+          msrpCents: 3_050_000,
+          miles: 91_000,
+        },
+        contract: { kind: "owned" },
+        dailyMiles: 30,
+        chargeAccess: "no",
+        stationCount: 0,
+        budgetCents: 70_000,
+        priorities: ["payment", "fuel", "total", "co2", "practical", "performance"],
+      }),
+    );
     expect(result.winner.powertrain).toBe("hybrid");
     expect(result.winner.verdict).toBe("viable");
     const plugs = result.ranked.filter((car) => car.powertrain === "phev" || car.powertrain === "bev");

@@ -1,13 +1,21 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { VehicleSilhouette } from "@/components/VehicleSilhouette";
 
-const VehicleViewer = dynamic(() => import("@/components/VehicleViewer"), {
-  ssr: false,
-  loading: () => <VehicleSilhouette className="h-96" />,
-});
+const VehicleViewer = dynamic(() => import("@/components/VehicleViewer"), { ssr: false });
 
-export function HomeCar() {
-  return <VehicleViewer paint="#1F4E79" frame="trip" />;
+export function HomeCar({
+  paint = "#1F4E79",
+  circling = true,
+  rolling = false,
+  profile = false,
+}: {
+  paint?: string;
+  circling?: boolean;
+  rolling?: boolean;
+  profile?: boolean;
+}) {
+  return (
+    <VehicleViewer paint={paint} frame="hero" circling={circling} rolling={rolling} profile={profile} />
+  );
 }

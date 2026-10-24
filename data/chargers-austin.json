@@ -1,0 +1,248 @@
+{
+  "fetchedAt": "2026-10-24",
+  "lat": 30.267,
+  "lon": -97.743,
+  "miles": 10,
+  "stations": [
+    {
+      "id": 239596,
+      "title": "515 CONGRESS 515 CONGRESS P9",
+      "lat": 30.267694,
+      "lon": -97.742662,
+      "address": "515 Congress Ave",
+      "town": "Austin"
+    },
+    {
+      "id": 239587,
+      "title": "SIENNATHOMPSON #2",
+      "lat": 30.266973,
+      "lon": -97.741718,
+      "address": "525 Brazos St",
+      "town": "Austin"
+    },
+    {
+      "id": 319117,
+      "title": "BRANDYWINE AUST COLORADO ST1",
+      "lat": 30.267581,
+      "lon": -97.744568,
+      "address": "405 Colorado St",
+      "town": "Austin"
+    },
+    {
+      "id": 218204,
+      "title": "BRANDYWINE AUST COLORADO ST2",
+      "lat": 30.26651,
+      "lon": -97.74467,
+      "address": "405 Colorado St",
+      "town": "Austin"
+    },
+    {
+      "id": 239592,
+      "title": "5TH & COLORADO 5TH & COLORADO3",
+      "lat": 30.267318,
+      "lon": -97.744906,
+      "address": "201 W 5th St",
+      "town": "Austin"
+    },
+    {
+      "id": 275285,
+      "title": "Colorado Tower",
+      "lat": 30.2658296,
+      "lon": -97.744641,
+      "address": "303 COLORADO ST",
+      "town": "austin"
+    },
+    {
+      "id": 239577,
+      "title": "301CONGRESS STATION 2",
+      "lat": 30.265132,
+      "lon": -97.742883,
+      "address": "301 Congress Ave",
+      "town": "Austin"
+    },
+    {
+      "id": 138482,
+      "title": "WHITLEY MAIN",
+      "lat": 30.2651989,
+      "lon": -97.7421936,
+      "address": "301 Brazos St",
+      "town": "Austin"
+    },
+    {
+      "id": 319126,
+      "title": "INDEED TOWER B3 CORE ST 2",
+      "lat": 30.268638,
+      "lon": -97.744304,
+      "address": "200 W 6th St",
+      "town": "Austin"
+    },
+    {
+      "id": 319086,
+      "title": "Whitley Apartments - Public - Tesla Destination",
+      "lat": 30.26505,
+      "lon": -97.74187,
+      "address": "301 Brazos St.",
+      "town": "Austin"
+    },
+    {
+      "id": 239584,
+      "title": "REPUBLICSQUARE GABLES REPUB3",
+      "lat": 30.266573,
+      "lon": -97.74553,
+      "address": "213 W 4th St",
+      "town": "Austin"
+    },
+    {
+      "id": 66854,
+      "title": "InterContinental Hotel - Tesla",
+      "lat": 30.2690776,
+      "lon": -97.7419653,
+      "address": "701 Congress Ave",
+      "town": "Austin"
+    },
+    {
+      "id": 93254,
+      "title": "Westin Austin Downtown",
+      "lat": 30.26662,
+      "lon": -97.740375,
+      "address": "310 E 5th St",
+      "town": "Austin"
+    },
+    {
+      "id": 319130,
+      "title": "INDEED TOWER B3-L",
+      "lat": 30.268858,
+      "lon": -97.744588,
+      "address": "200 W 6th St",
+      "town": "Austin"
+    },
+    {
+      "id": 218207,
+      "title": "INDEED TOWER B2",
+      "lat": 30.268935,
+      "lon": -97.744647,
+      "address": "210 W 6th St",
+      "town": "Austin"
+    },
+    {
+      "id": 319102,
+      "title": "REPUBLICSQUARE GABLES REPUB5",
+      "lat": 30.266691,
+      "lon": -97.745766,
+      "address": "219 W 4th St",
+      "town": "Austin"
+    },
+    {
+      "id": 239574,
+      "title": "JW Marriott Austin - Tesla Destination",
+      "lat": 30.264505,
+      "lon": -97.743302,
+      "address": "110  East 2nd Street",
+      "town": "Austin"
+    },
+    {
+      "id": 293423,
+      "title": "AUSTIN CENTRE AUSTIN CENTER 2",
+      "lat": 30.268782,
+      "lon": -97.740868,
+      "address": "205 E 7th St",
+      "town": "Austin"
+    },
+    {
+      "id": 239603,
+      "title": "InterContinental Stephen F Austin Hotel - Tesla Destination",
+      "lat": 30.269491,
+      "lon": -97.742266,
+      "address": "701 Congress Ave",
+      "town": "Austin"
+    },
+    {
+      "id": 319129,
+      "title": "AUSTIN CENTRE AUSTIN CENTER 1",
+      "lat": 30.268846,
+      "lon": -97.740768,
+      "address": "701 Brazos St",
+      "town": "Austin"
+    },
+    {
+      "id": 239601,
+      "title": "UNICOPROPERTIES LAVACA PLAZA 2",
+      "lat": 30.268325,
+      "lon": -97.746009,
+      "address": "504 Lavaca St",
+      "town": "Austin"
+    },
+    {
+      "id": 239599,
+      "title": "UNICOPROPERTIES LAVACA PLAZA 1",
+      "lat": 30.268247,
+      "lon": -97.746169,
+      "address": "504 Lavaca St",
+      "town": "Austin"
+    },
+    {
+      "id": 158341,
+      "title": "REPUBLICSQUARE GABLES REPUB1",
+      "lat": 30.267609,
+      "lon": -97.746544,
+      "address": "311 W 5th St",
+      "town": "Austin"
+    },
+    {
+      "id": 275284,
+      "title": "111 Congress",
+      "lat": 30.2636937,
+      "lon": -97.7437856,
+      "address": "111 Congress Avenue",
+      "town": "Austin"
+    },
+    {
+      "id": 102309,
+      "title": "100 CONGRESS",
+      "lat": 30.2639605,
+      "lon": -97.7448014,
+      "address": "100 Congress Ave",
+      "town": "Austin"
+    },
+    {
+      "id": 319080,
+      "title": "100 CONGRESS STATION 1",
+      "lat": 30.26396,
+      "lon": -97.744801,
+      "address": "100 Congress Ave",
+      "town": "Austin"
+    },
+    {
+      "id": 81612,
+      "title": "W Austin Hotel & Residences",
+      "lat": 30.265397,
+      "lon": -97.746566,
+      "address": "200 Lavaca St",
+      "town": "Austin"
+    },
+    {
+      "id": 319075,
+      "title": "PIE AE CONVENTION CTR1",
+      "lat": 30.263529,
+      "lon": -97.742431,
+      "address": "201 E 2nd St",
+      "town": "Austin"
+    },
+    {
+      "id": 239572,
+      "title": "PIE AE CONVENTION CTR2",
+      "lat": 30.263501,
+      "lon": -97.742377,
+      "address": "201 E 2nd St",
+      "town": "Austin"
+    },
+    {
+      "id": 239575,
+      "title": "PIE AE CITY HALL STAT1",
+      "lat": 30.264942,
+      "lon": -97.746925,
+      "address": "400 W 2nd St",
+      "town": "Austin"
+    }
+  ]
+}

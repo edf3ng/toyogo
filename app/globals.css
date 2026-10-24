@@ -39,6 +39,29 @@ summary {
   cursor: pointer;
 }
 
+@keyframes ridge-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.ridge-drift {
+  animation: ridge-drift 12s linear infinite;
+}
+
+.ridge-paused {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ridge-drift {
+    animation: none;
+  }
+}
+
 @media print {
   .no-print {
     display: none !important;
