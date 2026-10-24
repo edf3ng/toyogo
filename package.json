@@ -7,7 +7,8 @@
     "build": "next build --turbopack",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "fetch-epa": "node scripts/fetch-epa.mjs"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.9",
