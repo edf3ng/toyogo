@@ -11,6 +11,24 @@
   --color-line: #ddd6cb;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --radius-md: 6px;
+  --animate-drive: drive 2.8s linear infinite;
+}
+
+/** A car crossing its lane, for waits long enough that a static label looks stuck. */
+@keyframes drive {
+  from {
+    left: -2.5rem;
+  }
+  to {
+    left: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-drive {
+    animation: none;
+    left: 0;
+  }
 }
 
 html {
