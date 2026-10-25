@@ -21,7 +21,12 @@ export async function POST(request: Request) {
 
   const serpKey = process.env.SERPAPI_KEY;
   const geminiKey = process.env.GEMINI_API_KEY;
-  if (!serpKey || !geminiKey) return NextResponse.json({ source: "none" });
+  if (!serpKey || !geminiKey) {
+    return NextResponse.json({
+      source: "none",
+      reason: !serpKey && !geminiKey ? "missing-keys" : !serpKey ? "missing-serp" : "missing-gemini",
+    });
+  }
 
   // Rounded miles and sorted issues keep repeat visits off the SerpAPI quota.
   const cacheKey = [year, model.toLowerCase(), Math.round(miles / 1000), [...issues].sort().join(",")].join("|");
@@ -37,7 +42,8 @@ export async function POST(request: Request) {
     );
     cache.set(cacheKey, value);
     return NextResponse.json({ source: "market", value });
-  } catch {
-    return NextResponse.json({ source: "none" });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : "unknown";
+    return NextResponse.json({ source: "none", reason });
   }
 }
