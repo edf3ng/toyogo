@@ -6,7 +6,7 @@ import { PRIORITY_COPY, PRIORITY_KEYS, type PriorityKey } from "@/config/priorit
 import { PAINTS } from "@/config/vehicles";
 import { Field, SelectInput, TextInput } from "@/components/Field";
 import { Landmark } from "@/components/Landmark";
-import { readDriver } from "@/lib/driver";
+import { writeDriver } from "@/lib/driver";
 import { monthlyPaymentCents, remainingBalanceCents } from "@/lib/engine/finance";
 import { ownershipAgeYears, valueVehicle } from "@/lib/engine/valuation";
 import { formatDollars } from "@/lib/format";
@@ -15,10 +15,11 @@ import type { ChargeAccess } from "@/lib/engine/energy";
 import { buildTrip, writeTrip } from "@/lib/trip";
 
 const STOPS = [
-  { kicker: "Mile 1", marker: "Trailhead", title: "Where you drive" },
-  { kicker: "Mile 2", marker: "Overlook", title: "Your Toyota" },
-  { kicker: "Mile 3", marker: "Ledger rock", title: "How you paid" },
-  { kicker: "Mile 4", marker: "Summit register", title: "What matters" },
+  { kicker: "Stop 1", marker: "New York", title: "Your account", image: { src: "/images/nyc.jpeg", alt: "Illustration of New York City" } },
+  { kicker: "Stop 2", marker: "Chicago", title: "Where you drive", image: { src: "/images/chicago.jpeg", alt: "Illustration of the Chicago skyline" } },
+  { kicker: "Stop 3", marker: "Mt. Rushmore", title: "Your Toyota", image: { src: "/images/mtrushmore.jpeg", alt: "Illustration of Mount Rushmore" } },
+  { kicker: "Stop 4", marker: "Grand Canyon", title: "How you paid", image: { src: "/images/grandcanyon.jpg", alt: "Illustration of the Grand Canyon" } },
+  { kicker: "Stop 5", marker: "Golden Gate Bridge", title: "What matters", image: { src: "/images/goldengate.jpg", alt: "Illustration of the Golden Gate Bridge" } },
 ] as const;
 
 const ISSUE_OPTIONS = [
@@ -44,6 +45,9 @@ export function SignupWizard() {
   const years = garageYears();
   const first = modelsForYear(2019).find((row) => row.model === "Corolla") ?? modelsForYear(years[0])[0];
   const [step, setStep] = useState(0);
+  const [email, setEmail] = useState("Toyogo@gmail.com");
+  const [username, setUsername] = useState("Toyogo123");
+  const [password, setPassword] = useState("Toyoyo");
   const [zip, setZip] = useState("78704");
   const [charge, setCharge] = useState<ChargeAccess>("yes");
   const [year, setYear] = useState(first.year);
@@ -112,7 +116,7 @@ export function SignupWizard() {
     const months = Number(term) || 60;
     const left = Number(remaining) || 0;
     const saved = buildTrip({
-      name: readDriver()?.name || "Driver",
+      name: username.trim(),
       zip: zip.trim(),
       car,
       miles: Number(miles) || 0,
@@ -135,6 +139,8 @@ export function SignupWizard() {
       agreementName,
     });
     setVin("");
+    setPassword("");
+    writeDriver({ name: username.trim(), email: email.trim() });
     writeTrip(saved);
     router.push("/dashboard");
   }
@@ -142,12 +148,55 @@ export function SignupWizard() {
   const stop = STOPS[step];
 
   return (
-    <Landmark marker={stop.marker} kicker={stop.kicker} title={stop.title}>
+    <Landmark marker={stop.marker} kicker={stop.kicker} title={stop.title} image={stop.image}>
       <p className="mt-1 text-sm text-muted">
         Stop {step + 1} of {STOPS.length}
       </p>
 
       {step === 0 ? (
+        <form
+          id="signup-account"
+          className="mt-5 grid gap-4"
+          onSubmit={(event) => {
+            event.preventDefault();
+            setStep(1);
+          }}
+        >
+          <Field label="Email">
+            <TextInput
+              type="email"
+              name="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </Field>
+          <Field label="Username">
+            <TextInput
+              name="username"
+              autoComplete="username"
+              required
+              pattern=".*\S.*"
+              title="Enter a username with at least one non-space character."
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+            />
+          </Field>
+          <Field label="Password">
+            <TextInput
+              type="password"
+              name="password"
+              autoComplete="new-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </Field>
+        </form>
+      ) : null}
+
+      {step === 1 ? (
         <div className="mt-5 grid gap-4">
           <Field label="ZIP code" hint="This sets the state electricity average and the charging search.">
             <TextInput inputMode="numeric" autoComplete="postal-code" value={zip} onChange={(event) => setZip(event.target.value)} />
@@ -163,7 +212,7 @@ export function SignupWizard() {
         </div>
       ) : null}
 
-      {step === 1 ? (
+      {step === 2 ? (
         <div className="mt-5 grid gap-4">
           <Field label="Year">
             <SelectInput
@@ -214,7 +263,7 @@ export function SignupWizard() {
         </div>
       ) : null}
 
-      {step === 2 ? (
+      {step === 3 ? (
         <div className="mt-5 grid gap-4">
           <fieldset className="grid gap-2">
             <legend className="text-sm font-medium">Ownership</legend>
@@ -330,7 +379,7 @@ export function SignupWizard() {
         </div>
       ) : null}
 
-      {step === 3 ? (
+      {step === 4 ? (
         <div className="mt-5 grid gap-4">
           <Field label="Budget for the next vehicle, dollars a month">
             <TextInput inputMode="decimal" value={budget} onChange={(event) => setBudget(event.target.value)} />
@@ -379,9 +428,11 @@ export function SignupWizard() {
         ) : null}
         {step < STOPS.length - 1 ? (
           <button
-            type="button"
+            type={step === 0 ? "submit" : "button"}
+            form={step === 0 ? "signup-account" : undefined}
             className="h-11 rounded-md bg-jade px-4 text-sm font-medium text-white hover:bg-jade-800"
             onClick={() => {
+              if (step === 0) return;
               setVin("");
               setStep((current) => current + 1);
             }}

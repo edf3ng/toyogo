@@ -13,13 +13,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ text: "", source: "template" }, { status: 400 });
   }
   const template = explainTemplate(body);
-  const key = process.env.LLM_API_KEY;
+  const key = process.env.GEMINI_API_KEY;
   if (!key) return NextResponse.json({ text: template, source: "template" });
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), 2000);
   try {
-    const response = await fetch(process.env.LLM_BASE_URL ?? "https://api.openai.com/v1/chat/completions", {
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/openai/chat/completions", {
       method: "POST",
       signal: controller.signal,
       headers: {
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: process.env.LLM_MODEL ?? "gpt-4o-mini",
+        model: process.env.GEMINI_MODEL ?? "gemini-3.8-flash",
         temperature: 0,
         messages: [
           {
