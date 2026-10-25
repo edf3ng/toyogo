@@ -352,7 +352,7 @@ export function SignupWizard() {
           <Field label="Current mileage">
             <TextInput inputMode="numeric" value={miles} onChange={(event) => setMiles(event.target.value)} />
           </Field>
-          <Field label="VIN, optional" hint="Used only on this step. It is not saved and it is not sent.">
+          <Field label="VIN, optional">
             <TextInput value={vin} autoComplete="off" onChange={(event) => setVin(event.target.value.toUpperCase())} />
           </Field>
         </div>

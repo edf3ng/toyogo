@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import type { Driver } from "@/lib/driver";
 import type { SavedTrip } from "@/lib/trip";
+import { createPostgresPersistence } from "./postgres-accounts";
 
 const scrypt = promisify(scryptCallback);
 export const SESSION_SECONDS = 60 * 60 * 24 * 7;
@@ -16,9 +17,14 @@ interface User {
   trip: SavedTrip;
 }
 
-interface Store {
+export interface Store {
   users: User[];
   sessions: { tokenHash: string; userId: string; expiresAt: number }[];
+}
+
+export interface AccountPersistence {
+  read(): Promise<Store>;
+  transact<T>(operation: (store: Store) => Promise<T> | T): Promise<T>;
 }
 
 export interface Account {
@@ -79,13 +85,14 @@ function publicAccount(user: User): Account {
   return { driver: { name: user.username, email: user.email }, trip: user.trip };
 }
 
-/** Single-process JSON storage. Queue updates and atomically replace the file. */
+/** Account logic shared by local JSON storage and hosted Postgres storage. */
 export class AccountStore {
   private queue: Promise<unknown> = Promise.resolve();
 
-  constructor(private filename: string) {}
+  constructor(private filename: string, private persistence?: AccountPersistence) {}
 
   private async read(): Promise<Store> {
+    if (this.persistence) return this.persistence.read();
     try {
       return JSON.parse(await readFile(this.filename, "utf8")) as Store;
     } catch (error) {
@@ -95,6 +102,12 @@ export class AccountStore {
   }
 
   private transact<T>(operation: (store: Store) => Promise<T> | T): Promise<T> {
+    if (this.persistence) {
+      return this.persistence.transact((store) => {
+        store.sessions = store.sessions.filter((session) => session.expiresAt > Date.now());
+        return operation(store);
+      });
+    }
     const result = this.queue.then(async () => {
       const store = await this.read();
       store.sessions = store.sessions.filter((session) => session.expiresAt > Date.now());
@@ -183,6 +196,18 @@ export class AccountStore {
   }
 }
 
-// Share the write queue across route bundles and development hot reloads.
-const shared = globalThis as typeof globalThis & { toyogoAccounts?: AccountStore };
-export const accounts = shared.toyogoAccounts ??= new AccountStore(path.join(process.cwd(), "data", "accounts.json"));
+export function createAccountStore(env: Record<string, string | undefined> = process.env) {
+  const url = env.DATABASE_URL || env.POSTGRES_URL;
+  if (url) return new AccountStore("", createPostgresPersistence(url));
+  if (env.VERCEL) {
+    const unavailable = async () => { throw new AccountError("Account storage is not configured. Set DATABASE_URL in Vercel and redeploy.", 503); };
+    return new AccountStore("", { read: unavailable, transact: unavailable });
+  }
+  return new AccountStore(path.join(process.cwd(), "data", "accounts.json"));
+}
+
+// Share the client/JSON write queue across route bundles and development hot reloads.
+const shared = globalThis as typeof globalThis & { toyogoAccountStorage?: { key: string; store: AccountStore } };
+const key = "jsonb-v2:" + (process.env.DATABASE_URL || process.env.POSTGRES_URL || (process.env.VERCEL ? "missing-vercel-database" : "local-json"));
+if (shared.toyogoAccountStorage?.key !== key) shared.toyogoAccountStorage = { key, store: createAccountStore() };
+export const accounts = shared.toyogoAccountStorage.store;
