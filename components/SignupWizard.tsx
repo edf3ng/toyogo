@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { Reorder } from "framer-motion";
 import { PRIORITY_COPY, PRIORITY_KEYS, type PriorityKey } from "@/config/priorities";
 import { PAINTS } from "@/config/vehicles";
 import { Stagger } from "@/components/appear";
@@ -39,6 +40,10 @@ function rate(raw: string): number {
   const value = Number(raw);
   if (!Number.isFinite(value) || value <= 0) return 0.049;
   return value > 1 ? value / 100 : value;
+}
+
+function scrollSignupToTop() {
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
 export function SignupWizard() {
@@ -142,6 +147,10 @@ export function SignupWizard() {
     return () => controller.abort();
   }, []);
 
+  useEffect(() => {
+    scrollSignupToTop();
+  }, [step]);
+
   const models = modelsForYear(year);
   const car = models.find((row) => row.id === carId) ?? models[0] ?? garageCar(carId);
 
@@ -169,13 +178,20 @@ export function SignupWizard() {
     return { value, balance, computedPayment, elapsed };
   }, [apr, car.model, car.year, finance, issues, miles, payoff, principal, remaining, term]);
 
-  function move(index: number, direction: -1 | 1) {
-    const next = [...priorities];
-    const target = index + direction;
-    if (target < 0 || target >= next.length) return;
-    const [item] = next.splice(index, 1);
-    next.splice(target, 0, item);
-    setPriorities(next);
+  function showStep(next: number) {
+    setVin("");
+    setStep(next);
+  }
+
+  function movePriority(index: number, direction: -1 | 1) {
+    setPriorities((current) => {
+      const target = index + direction;
+      if (target < 0 || target >= current.length) return current;
+      const next = [...current];
+      const [item] = next.splice(index, 1);
+      next.splice(target, 0, item);
+      return next;
+    });
   }
 
   function toggleIssue(id: string) {
@@ -260,7 +276,7 @@ export function SignupWizard() {
           className="mt-5"
           onSubmit={(event) => {
             event.preventDefault();
-            setStep(1);
+            showStep(1);
           }}
         >
           <Stagger className="grid gap-4">
@@ -494,23 +510,42 @@ export function SignupWizard() {
           </Field>
           <div>
             <p className="text-sm font-medium">Rank what you consider. First counts most.</p>
-            <ol className="mt-2 grid gap-2">
+            <p className="mt-1 text-sm text-muted">Drag a row to move it. Arrow keys also work.</p>
+            <Reorder.Group
+              axis="y"
+              values={priorities}
+              onReorder={setPriorities}
+              as="ol"
+              className="mt-2 grid gap-2"
+            >
               {priorities.map((key, index) => (
-                <li key={key} className="flex items-center justify-between gap-3 border border-line bg-white px-3 py-2">
+                <Reorder.Item
+                  key={key}
+                  value={key}
+                  as="li"
+                  tabIndex={0}
+                  aria-label={`${index + 1}. ${PRIORITY_COPY[key]}. Drag to reorder.`}
+                  onKeyDown={(event) => {
+                    if (event.key === "ArrowUp") {
+                      event.preventDefault();
+                      movePriority(index, -1);
+                    }
+                    if (event.key === "ArrowDown") {
+                      event.preventDefault();
+                      movePriority(index, 1);
+                    }
+                  }}
+                  className="flex cursor-grab items-center justify-between gap-3 border border-line bg-white px-3 py-2 select-none active:cursor-grabbing"
+                >
                   <span className="text-sm">
                     {index + 1}. {PRIORITY_COPY[key]}
                   </span>
-                  <span className="flex gap-2">
-                    <button type="button" className="text-sm text-jade-800" onClick={() => move(index, -1)}>
-                      Up
-                    </button>
-                    <button type="button" className="text-sm text-jade-800" onClick={() => move(index, 1)}>
-                      Down
-                    </button>
+                  <span className="text-muted" aria-hidden>
+                    ⋮⋮
                   </span>
-                </li>
+                </Reorder.Item>
               ))}
-            </ol>
+            </Reorder.Group>
           </div>
           <Field label="Other" hint="Shown on the recommendation. Not part of the score.">
             <TextInput value={other} onChange={(event) => setOther(event.target.value)} />
@@ -521,7 +556,7 @@ export function SignupWizard() {
       {error ? (
         <div className="mt-4 text-sm">
           <p role="alert">{error}</p>
-          {step > 0 ? <button type="button" className="mt-2 text-jade-800 underline" onClick={() => setStep(0)}>Edit account details</button> : null}
+          {step > 0 ? <button type="button" className="mt-2 text-jade-800 underline" onClick={() => showStep(0)}>Edit account details</button> : null}
         </div>
       ) : null}
       <div className="mt-6 flex gap-3">
@@ -530,10 +565,7 @@ export function SignupWizard() {
             type="button"
             disabled={saving}
             className="h-11 rounded-md border border-line px-4 text-sm"
-            onClick={() => {
-              setVin("");
-              setStep((current) => current - 1);
-            }}
+            onClick={() => showStep(step - 1)}
           >
             Back
           </button>
@@ -545,8 +577,7 @@ export function SignupWizard() {
             className="h-11 rounded-md bg-jade px-4 text-sm font-medium text-white hover:bg-jade-800"
             onClick={() => {
               if (step === 0) return;
-              setVin("");
-              setStep((current) => current + 1);
+              showStep(step + 1);
             }}
           >
             Continue
