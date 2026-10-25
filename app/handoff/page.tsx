@@ -95,7 +95,6 @@ export default function HandoffPage() {
         </>
       ) : null}
 
-      <p className="mt-6 text-sm">{COPY.footer}</p>
       <p className="text-sm">{COPY.noApproval}</p>
 
       <button

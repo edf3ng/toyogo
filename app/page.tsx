@@ -5,7 +5,6 @@ import { PresentationControls, useGLTF, useTexture } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
 import * as THREE from "three";
-import { COPY } from "@/config/copy";
 import { BODY_MATERIAL_NAME } from "@/config/vehicles";
 
 // Keep the supplied image in this page so no additional asset file is needed.
@@ -295,9 +294,6 @@ export default function Home() {
   return (
     <section className="relative h-dvh overflow-hidden bg-white">
       <HomeCar />
-      <p className="pointer-events-none absolute inset-x-0 bottom-3 px-4 text-center text-xs text-muted">
-        {COPY.stylisedVehicle} {COPY.footer}
-      </p>
     </section>
   );
 }

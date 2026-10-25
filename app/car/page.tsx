@@ -43,7 +43,6 @@ export default function CarPage() {
         </p>
       </div>
       <div className="mt-6 max-w-2xl border-t border-line pt-4 text-sm">
-        <p>{COPY.modelCredit}</p>
         <p className="mt-2 text-muted">
           One model stands in for every Toyota in the demo. It is not the car being scored.
         </p>

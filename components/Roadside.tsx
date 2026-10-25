@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { COPY } from "@/config/copy";
 import { SuggestionsPanel } from "@/components/evidence/SuggestionsPanel";
 import { TradeInPanel } from "@/components/evidence/TradeInPanel";
 import { HomeCar } from "@/components/HomeCar";
@@ -96,10 +95,6 @@ export function Roadside() {
               </div>
             </>
           ) : null}
-          <footer className="mt-6 border-t border-line pt-3 text-xs text-muted">
-            <p>{COPY.footer}</p>
-            <p className="mt-1">{COPY.modelCredit}</p>
-          </footer>
         </div>
       </aside>
     </section>
