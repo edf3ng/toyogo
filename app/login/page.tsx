@@ -17,7 +17,7 @@ export default function LoginPage() {
       marker="Niagara Falls"
       kicker="Stop"
       title="Log in"
-      image={{ src: "/images/niagara.jpeg", alt: "Niagara Falls" }}
+      image={{ src: "/images/niagara.png", alt: "Niagara Falls" }}
     >
       <p className="mt-2 text-sm text-muted">
         Demo sign-in — no account is created and nothing is stored. Any password is accepted, then
