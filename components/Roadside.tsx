@@ -3,13 +3,22 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { COPY } from "@/config/copy";
 import { SuggestionsPanel } from "@/components/evidence/SuggestionsPanel";
 import { TradeInPanel } from "@/components/evidence/TradeInPanel";
 import { HomeCar } from "@/components/HomeCar";
-import { recommendSwitch } from "@/lib/engine/switch";
+import { recommendSwitch, type RankedSwitch } from "@/lib/engine/switch";
 import { readTrip, type SavedTrip } from "@/lib/trip";
 import { ACCOUNT_CHANGED } from "@/lib/account";
+
+const CAMRY_MODEL = "/models/camry.glb?v=2";
+const BZ4X_MODEL = "/models/bz4x.glb?v=3";
+
+function modelFor(option: RankedSwitch | null, page: "analytics" | "suggestions"): string {
+  if (page === "suggestions" && option && /bz4x|\bbz\b/i.test(`${option.model} ${option.label}`)) {
+    return BZ4X_MODEL;
+  }
+  return CAMRY_MODEL;
+}
 
 const PAGES = [
   { id: "analytics", label: "Analytics" },
@@ -28,6 +37,7 @@ export function Roadside() {
   const requested = params.get("tab");
   const page: PageId = isPage(requested) ? requested : "analytics";
   const [trip, setTrip] = useState<SavedTrip | null | undefined>(undefined);
+  const [picked, setPicked] = useState<RankedSwitch | null>(null);
 
   useEffect(() => {
     const sync = () => setTrip(readTrip());
@@ -41,7 +51,7 @@ export function Roadside() {
   return (
     <section className="grid h-dvh grid-rows-[minmax(16rem,42vh)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.9fr)] lg:grid-rows-1">
       <div className="relative min-h-0 overflow-hidden bg-white">
-        <HomeCar paint={trip?.paint} />
+        <HomeCar paint={trip?.paint} modelUrl={modelFor(picked, page)} />
       </div>
       <aside className="flex min-h-0 flex-col overflow-hidden border-l border-line bg-paper">
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-16 pb-6 lg:px-5">
@@ -91,15 +101,11 @@ export function Roadside() {
                     <TradeInPanel trip={trip} />
                   </div>
                 ) : (
-                  <SuggestionsPanel trip={trip} result={result} />
+                  <SuggestionsPanel trip={trip} result={result} onSelect={setPicked} />
                 )}
               </div>
             </>
           ) : null}
-          <footer className="mt-6 border-t border-line pt-3 text-xs text-muted">
-            <p>{COPY.footer}</p>
-            <p className="mt-1">{COPY.modelCredit}</p>
-          </footer>
         </div>
       </aside>
     </section>
