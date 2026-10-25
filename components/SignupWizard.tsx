@@ -15,11 +15,11 @@ import type { ChargeAccess } from "@/lib/engine/energy";
 import { buildTrip, writeTrip } from "@/lib/trip";
 
 const STOPS = [
-  { kicker: "Mile 1", marker: "Trail register", title: "Your account" },
-  { kicker: "Mile 2", marker: "Trailhead", title: "Where you drive" },
-  { kicker: "Mile 3", marker: "Overlook", title: "Your Toyota" },
-  { kicker: "Mile 4", marker: "Ledger rock", title: "How you paid" },
-  { kicker: "Mile 5", marker: "Summit register", title: "What matters" },
+  { kicker: "Stop 1", marker: "New York", title: "Your account", image: { src: "/images/nyc.jpeg", alt: "Illustration of New York City" } },
+  { kicker: "Stop 2", marker: "Chicago", title: "Where you drive", image: { src: "/images/chicago.jpeg", alt: "Illustration of the Chicago skyline" } },
+  { kicker: "Stop 3", marker: "Mt. Rushmore", title: "Your Toyota", image: { src: "/images/mtrushmore.jpeg", alt: "Illustration of Mount Rushmore" } },
+  { kicker: "Stop 4", marker: "Grand Canyon", title: "How you paid", image: { src: "/images/grandcanyon.jpg", alt: "Illustration of the Grand Canyon" } },
+  { kicker: "Stop 5", marker: "Golden Gate Bridge", title: "What matters", image: { src: "/images/goldengate.jpg", alt: "Illustration of the Golden Gate Bridge" } },
 ] as const;
 
 const ISSUE_OPTIONS = [
@@ -148,7 +148,7 @@ export function SignupWizard() {
   const stop = STOPS[step];
 
   return (
-    <Landmark marker={stop.marker} kicker={stop.kicker} title={stop.title}>
+    <Landmark marker={stop.marker} kicker={stop.kicker} title={stop.title} image={stop.image}>
       <p className="mt-1 text-sm text-muted">
         Stop {step + 1} of {STOPS.length}
       </p>
