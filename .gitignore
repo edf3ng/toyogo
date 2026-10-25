@@ -24,6 +24,8 @@
 # misc
 .DS_Store
 *.pem
+/data/accounts.json
+/data/accounts.json.*.tmp
 
 # debug
 npm-debug.log*
