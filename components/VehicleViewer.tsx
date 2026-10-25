@@ -9,6 +9,7 @@ import { VehicleSilhouette } from "@/components/VehicleSilhouette";
 import { BODY_MATERIAL_NAME } from "@/config/vehicles";
 
 const CAMRY_URL = "/models/camry.glb?v=2";
+const CAMRY_HYBRID_URL = "/models/camry-hybrid.glb?v=3";
 const BZ4X_URL = "/models/bz4x.glb?v=3";
 const COROLLA_HYBRID_URL = "/models/corolla-hybrid.glb?v=1";
 const MODEL_URL = CAMRY_URL;
@@ -21,6 +22,7 @@ const WINDOW_YAW = Math.atan2(7.2, 8.1);
 const WINDOW_WIDTH = 9;
 
 useGLTF.preload(CAMRY_URL);
+useGLTF.preload(CAMRY_HYBRID_URL, DRACO_PATH);
 useGLTF.preload(BZ4X_URL, DRACO_PATH);
 useGLTF.preload(COROLLA_HYBRID_URL, DRACO_PATH);
 
