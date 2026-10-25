@@ -10,8 +10,8 @@ const dollars = (n: number) => n.toLocaleString("en-US", { style: "currency", cu
 /** The searches run first and return in about a second. The rest is the model reading them. */
 function waitingLine(seconds: number): string {
   if (seconds < 4) return "Searching KBB, Edmunds and CarGurus…";
-  if (seconds < 15) return "Reading the listings that came back…";
-  return "Still working. A busy model can take a minute.";
+  if (seconds < 12) return "Reading the listings that came back…";
+  return "Still working on the listings.";
 }
 
 function Bar({ className = "", delay = 0, height }: { className?: string; delay?: number; height?: string }) {
@@ -120,8 +120,8 @@ export function MarketValue({
       <p className="mt-3 text-sm">{state.notes}</p>
       {state.comparables.length > 0 ? (
         <ul className="mt-3 grid gap-2 text-sm">
-          {state.comparables.map((c) => (
-            <li key={c.link || c.title}>
+          {state.comparables.map((c, index) => (
+            <li key={`${c.link}|${c.title}|${c.priceDollars}|${index}`}>
               <a href={c.link} target="_blank" rel="noreferrer" className="text-jade-800">
                 {c.title}
               </a>{" "}

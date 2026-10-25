@@ -28,6 +28,12 @@ const POWERTRAIN_LABEL: Record<RankedSwitch["powertrain"], string> = {
   bev: "Battery EV",
 };
 
+const VERDICT_LABEL: Record<RankedSwitch["verdict"], string> = {
+  viable: "Viable",
+  caveats: "Caveats",
+  not_yet: "Not yet",
+};
+
 const PLACE = ["first", "second", "third"];
 
 function paybackLabel(option: RankedSwitch): string {
@@ -170,14 +176,17 @@ export function SuggestionsPanel({
             >
               <span className="block font-medium">{item.label}</span>
               <span className={`block text-xs ${selected ? "text-white/80" : "text-muted"}`}>
-                Ranked {itemIndex + 1}
+                Ranked {itemIndex + 1} · {VERDICT_LABEL[item.verdict]}
               </span>
             </button>
           );
         })}
       </div>
       <Swap id={option.id}>
-      <p className="mt-5 text-sm text-jade-800">{POWERTRAIN_LABEL[option.powertrain]}</p>
+      <p className="mt-5 flex flex-wrap items-baseline gap-x-2 text-sm">
+        <span className="text-jade-800">{POWERTRAIN_LABEL[option.powertrain]}</span>
+        <span>{VERDICT_LABEL[option.verdict]}</span>
+      </p>
       <h2 className="text-2xl font-semibold tracking-tight">{option.label}</h2>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div className="border border-line bg-white p-3">
