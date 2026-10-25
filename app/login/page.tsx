@@ -4,13 +4,13 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Field, TextInput } from "@/components/Field";
 import { Landmark } from "@/components/Landmark";
-import { writeDriver } from "@/lib/driver";
-import { readTrip } from "@/lib/trip";
+import { login } from "@/lib/account";
 
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   return (
     <Landmark
@@ -20,24 +20,26 @@ export default function LoginPage() {
       image={{ src: "/images/niagara.jpeg", alt: "Niagara Falls" }}
     >
       <p className="mt-2 text-sm text-muted">
-        Demo sign-in — no account is created and nothing is stored. Any password is accepted, then
-        discarded.
+        Log in to retrieve your saved Toyota and preferences.
       </p>
       <form
         className="mt-5 grid gap-4"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
+          if (submitting) return;
           const data = new FormData(event.currentTarget);
           const address = email.trim();
           const password = String(data.get("password") ?? "");
-          if (!address.includes("@") || password.length === 0) {
-            setError("Enter an email and any password. This screen does not check them.");
-            return;
+          setError("");
+          setSubmitting(true);
+          try {
+            await login(address, password);
+            router.push("/dashboard");
+          } catch (error) {
+            setError(error instanceof Error ? error.message : "Could not log in. Please try again.");
+          } finally {
+            setSubmitting(false);
           }
-          const local = address.split("@")[0]?.replace(/[._-]+/g, " ").trim() || "Driver";
-          const name = local.charAt(0).toUpperCase() + local.slice(1);
-          writeDriver({ name, email: address });
-          router.push(readTrip() ? "/dashboard" : "/signup");
         }}
       >
         <Field label="Email">
@@ -45,20 +47,22 @@ export default function LoginPage() {
             type="email"
             name="email"
             autoComplete="username"
+            required
             value={email}
             onChange={(event) => setEmail(event.target.value)}
           />
         </Field>
         <Field label="Password">
-          <TextInput type="text" name="password" placeholder="anything" autoComplete="off" />
+          <TextInput type="password" name="password" autoComplete="current-password" required maxLength={128} />
         </Field>
-        {error ? <p className="text-sm">{error}</p> : null}
+        {error ? <p role="alert" className="text-sm">{error}</p> : null}
         <div className="flex flex-wrap gap-3">
           <button
             type="submit"
+            disabled={submitting}
             className="h-11 rounded-md bg-jade px-4 text-sm font-medium text-white hover:bg-jade-800"
           >
-            Log in
+            {submitting ? "Logging in…" : "Log in"}
           </button>
           <a href="/signup" className="inline-flex h-11 items-center text-sm font-medium text-jade-800">
             Need an account? Sign up
