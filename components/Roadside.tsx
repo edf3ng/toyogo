@@ -14,6 +14,7 @@ import { formatDollars, formatPercent } from "@/lib/format";
 import { recommendSwitch, type RankedSwitch, type SwitchResult } from "@/lib/engine/switch";
 import type { Verdict } from "@/lib/engine/viability";
 import { readTrip, type SavedTrip } from "@/lib/trip";
+import { ACCOUNT_CHANGED } from "@/lib/account";
 
 const TABS = [
   { id: "trade-in", label: "Trade-in" },
@@ -106,7 +107,10 @@ export function Roadside() {
   const [trip, setTrip] = useState<SavedTrip | null | undefined>(undefined);
 
   useEffect(() => {
-    setTrip(readTrip());
+    const sync = () => setTrip(readTrip());
+    sync();
+    window.addEventListener(ACCOUNT_CHANGED, sync);
+    return () => window.removeEventListener(ACCOUNT_CHANGED, sync);
   }, []);
 
   const result = trip ? recommendSwitch(trip.input) : null;
