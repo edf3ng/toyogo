@@ -6,6 +6,62 @@ import type { MarketValue as Market } from "@/types/market";
 
 const dollars = (n: number) => n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 
+/** The searches run first and return in about a second. The rest is the model reading them. */
+function waitingLine(seconds: number): string {
+  if (seconds < 4) return "Searching KBB, Edmunds and CarGurus…";
+  if (seconds < 15) return "Reading the listings that came back…";
+  return "Still working. A busy model can take a minute.";
+}
+
+function Bar({ className = "", delay = 0, height }: { className?: string; delay?: number; height?: string }) {
+  return <div className={`animate-pulse bg-line/70 ${className}`} style={{ animationDelay: `${delay}ms`, height }} />;
+}
+
+function MarketLoading() {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => setSeconds((value) => value + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="mt-6 border-t border-line pt-4">
+      <h2 className="text-lg font-semibold">Market check</h2>
+      <p className="mt-1 flex items-baseline justify-between gap-3 text-sm text-muted">
+        <span aria-live="polite">{waitingLine(seconds)}</span>
+        <span className="tabular-nums">{seconds}s</span>
+      </p>
+      <div className="relative mt-2 h-5 overflow-hidden" aria-hidden>
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 border-t-2 border-dashed border-line" />
+        <svg viewBox="0 0 28 16" className="absolute top-0 h-5 w-9 animate-drive">
+          <path fill="#2e3440" d="M3 11h2l2-4h10l3 3h4v3H3v-2z" />
+          <circle cx="8" cy="12" r="1.4" fill="#fdfbf7" />
+          <circle cx="20" cy="12" r="1.4" fill="#fdfbf7" />
+        </svg>
+      </div>
+      <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2" aria-hidden>
+        {["Trade-in range", "Dealer asking range"].map((label, index) => (
+          <div key={label}>
+            <dt className="text-muted">{label}</dt>
+            <dd className="mt-1">
+              <Bar className="h-6 w-40" delay={index * 150} />
+            </dd>
+            <dd className="mt-1">
+              <Bar className="h-4 w-24" delay={index * 150 + 75} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <div className="mt-4 flex h-48 items-end gap-3 border border-line bg-white p-3" aria-hidden>
+        {[38, 52, 67, 84].map((height, index) => (
+          <Bar key={height} className="flex-1" delay={index * 180} height={`${height}%`} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function MarketValue({
   year,
   model,
@@ -30,14 +86,18 @@ export function MarketValue({
       body: JSON.stringify({ year, model, miles, issues: issueKey ? issueKey.split(",") : [] }),
     })
       .then((r) => r.json())
-      .then((data: { source: string; value?: Market }) => setState(data.value ?? "none"))
-      .catch((error) => {
-        if (error?.name !== "AbortError") setState("none");
+      .then((data: { source: string; value?: Market }) => {
+        if (!controller.signal.aborted) setState(data.value ?? "none");
+      })
+      // An aborted fetch rejects as a plain TypeError in Safari, not an
+      // AbortError, so the signal is what says whether this run still counts.
+      .catch(() => {
+        if (!controller.signal.aborted) setState("none");
       });
     return () => controller.abort();
   }, [year, model, miles, issueKey]);
 
-  if (state === "loading") return <p className="mt-6 text-sm text-muted">Checking live market prices…</p>;
+  if (state === "loading") return <MarketLoading />;
   if (state === "none") {
     return <p className="mt-6 text-sm text-muted">Live market prices are unavailable, so the figures above are modelled.</p>;
   }
