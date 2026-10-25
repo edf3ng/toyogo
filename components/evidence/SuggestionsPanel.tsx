@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { PRIORITY_COPY } from "@/config/priorities";
-import { COPY } from "@/config/copy";
+import { Swap } from "@/components/appear";
 import { ChargingPanel } from "@/components/evidence/ChargingPanel";
 import { ImpactPanel } from "@/components/evidence/ImpactPanel";
 import { SavingsPanel } from "@/components/evidence/SavingsPanel";
 import { ScoreBars } from "@/components/ScoreBars";
-import { formatDollars } from "@/lib/format";
-import { viabilityMultiplier } from "@/lib/engine/viability";
+import { formatDollars, formatNumber, formatPercent } from "@/lib/format";
+import { switchWorth } from "@/lib/engine/energy";
 import type { RankedSwitch, SwitchResult } from "@/lib/engine/switch";
 import type { ExplainFacts } from "@/lib/explain";
 import type { SavedTrip } from "@/lib/trip";
-import type { Verdict } from "@/lib/engine/viability";
 
 const SECTIONS = [
   { id: "savings", label: "Gas savings" },
@@ -22,12 +21,6 @@ const SECTIONS = [
 
 type SectionId = (typeof SECTIONS)[number]["id"];
 
-const VERDICT_LABEL: Record<Verdict, string> = {
-  viable: "Viable",
-  caveats: "Viable with caveats",
-  not_yet: "Not yet",
-};
-
 const POWERTRAIN_LABEL: Record<RankedSwitch["powertrain"], string> = {
   gas: "Gasoline",
   hybrid: "Standard hybrid",
@@ -35,23 +28,46 @@ const POWERTRAIN_LABEL: Record<RankedSwitch["powertrain"], string> = {
   bev: "Battery EV",
 };
 
+const VERDICT_LABEL: Record<RankedSwitch["verdict"], string> = {
+  viable: "Viable",
+  caveats: "Caveats",
+  not_yet: "Not yet",
+};
+
 const PLACE = ["first", "second", "third"];
 
-function paybackLabel(months: number): string {
-  if (!Number.isFinite(months)) return "Fuel savings alone don't cover the payment increase";
-  if (months <= 0) return "The payment is not higher than today";
-  return `${Math.round(months)} months`;
+function paybackLabel(option: RankedSwitch): string {
+  const worth = switchWorth(option);
+  if (worth.extraMonthlyCents <= 0) return "The payment is not higher than today";
+  if (option.monthlyEnergySavingCents <= 0) return "Fuel does not fall, so it does not offset the extra payment";
+  if (worth.netMonthlyCents <= 0 && Number.isFinite(worth.paybackMonths)) {
+    return `${Math.round(worth.paybackMonths)} months for fuel savings to cover the extra payment`;
+  }
+  if (worth.fuelCoversShare === null) return "Fuel savings alone don't cover the extra payment";
+  return `Fuel covers ${formatPercent(worth.fuelCoversShare)} of each extra payment, so the extra payment does not pay back from fuel alone`;
+}
+
+function worthCopy(option: RankedSwitch): string {
+  const worth = switchWorth(option);
+  if (worth.extraMonthlyCents <= 0) {
+    return `The example payment is not higher than today. Fuel still ${
+      worth.annualFuelSaveCents >= 0 ? "saves" : "costs"
+    } ${formatDollars(Math.abs(worth.annualFuelSaveCents))} a year.`;
+  }
+  if (worth.fuelCoversShare === null) {
+    return `The extra payment is ${formatDollars(worth.extraMonthlyCents)}/mo.`;
+  }
+  const share = formatPercent(worth.fuelCoversShare);
+  if (worth.netMonthlyCents <= 0) {
+    return `Fuel saves ${formatDollars(option.monthlyEnergySavingCents)}/mo and more than covers the extra ${formatDollars(worth.extraMonthlyCents)}/mo payment. You are ${formatDollars(Math.abs(worth.netMonthlyCents))}/mo ahead after fuel. Over 5 years, fuel saves ${formatDollars(worth.fiveYearFuelCents)} against ${formatDollars(worth.fiveYearExtraCents)} of extra payments.`;
+  }
+  return `Fuel saves ${formatDollars(option.monthlyEnergySavingCents)}/mo, which is ${share} of the extra ${formatDollars(worth.extraMonthlyCents)}/mo payment. After fuel, the switch costs ${formatDollars(worth.netMonthlyCents)}/mo. Over 5 years, fuel saves ${formatDollars(worth.fiveYearFuelCents)} against ${formatDollars(worth.fiveYearExtraCents)} of extra payments.`;
 }
 
 function scoreSentence(option: RankedSwitch, rank: number, count: number): string {
   const weighted = Object.values(option.factors).reduce((sum, value) => sum + value, 0);
-  const multiplier = viabilityMultiplier(option.verdict);
   const place = PLACE[rank - 1] ?? `number ${rank}`;
-  const scaled =
-    multiplier === 1
-      ? "Viable keeps that total."
-      : `${VERDICT_LABEL[option.verdict]} multiplies that total by ${multiplier}.`;
-  return `${option.label} ranks ${place} of ${count}. The bars add to ${weighted.toFixed(2)}. ${scaled} The score is ${option.score.toFixed(2)}.`;
+  return `${option.label} ranks ${place} of ${count}. The bars add to ${weighted.toFixed(2)}. The score is ${option.score.toFixed(2)}.`;
 }
 
 function factsFor(option: RankedSwitch): ExplainFacts {
@@ -104,11 +120,25 @@ function WrittenLine({ option, rank }: { option: RankedSwitch; rank: number }) {
   return <p className="mt-3 text-sm">{text}</p>;
 }
 
-export function SuggestionsPanel({ trip, result }: { trip: SavedTrip; result: SwitchResult }) {
+export function SuggestionsPanel({
+  trip,
+  result,
+  onSelect,
+}: {
+  trip: SavedTrip;
+  result: SwitchResult;
+  onSelect?: (option: RankedSwitch | null) => void;
+}) {
   const [index, setIndex] = useState(0);
   const [section, setSection] = useState<SectionId>("savings");
   const options = result.ranked;
   const option = options[index] ?? options[0];
+
+  useEffect(() => {
+    if (option) onSelect?.(option);
+    // The option object is rebuilt every render. The id is the selected car.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [option?.id, onSelect]);
 
   if (!option) {
     return (
@@ -124,13 +154,12 @@ export function SuggestionsPanel({ trip, result }: { trip: SavedTrip; result: Sw
   const suggestion = { id: option.id, label: option.label, powertrain: option.powertrain };
   const priorities = trip.input.priorities.map((key) => PRIORITY_COPY[key]).join(", ");
   const rank = index + 1;
+  const worth = switchWorth(option);
 
   return (
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">Suggestions</h1>
-      <p className="mt-1 text-sm text-muted">
-        Ranked from your priorities, then the viability multiplier. The score picks the car.
-      </p>
+      <p className="mt-1 text-sm text-muted">Ranked from your priorities. The score picks the car.</p>
       <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Suggested cars">
         {options.map((item, itemIndex) => {
           const selected = item.id === option.id;
@@ -153,24 +182,59 @@ export function SuggestionsPanel({ trip, result }: { trip: SavedTrip; result: Sw
           );
         })}
       </div>
-      <p className="mt-5 text-sm text-jade-800">{POWERTRAIN_LABEL[option.powertrain]}</p>
-      <h2 className="text-2xl font-semibold tracking-tight">
-        {VERDICT_LABEL[option.verdict]} · {option.label}
-      </h2>
-      <dl className="mt-4 grid grid-cols-2 gap-3 text-sm">
-        <div>
-          <dt className="text-muted">Example payment</dt>
-          <dd className="font-medium">{formatDollars(option.paymentCents)}/mo</dd>
+      <Swap id={option.id}>
+      <p className="mt-5 flex flex-wrap items-baseline gap-x-2 text-sm">
+        <span className="text-jade-800">{POWERTRAIN_LABEL[option.powertrain]}</span>
+        <span>{VERDICT_LABEL[option.verdict]}</span>
+      </p>
+      <h2 className="text-2xl font-semibold tracking-tight">{option.label}</h2>
+      <div className="mt-4 grid grid-cols-2 gap-3">
+        <div className="border border-line bg-white p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">Fuel if you switch</p>
+          <p className="mt-1 text-3xl font-semibold tracking-tight">
+            {formatDollars(Math.abs(option.monthlyEnergySavingCents * 12))}
+          </p>
+          <p className="text-sm">
+            {option.monthlyEnergySavingCents >= 0 ? "less each year" : "more each year"} than the{" "}
+            {result.keep.year} {result.keep.model}
+          </p>
         </div>
-        <div>
-          <dt className="text-muted">Fuel saved each year</dt>
-          <dd className="font-medium">{formatDollars(option.monthlyEnergySavingCents * 12)}</dd>
+        <div className="border border-line bg-white p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">Tailpipe if you switch</p>
+          <p className="mt-1 text-3xl font-semibold tracking-tight">
+            {formatNumber(Math.max(0, Math.round(option.co2AvoidedLbs)))} lb
+          </p>
+          <p className="text-sm">
+            {option.annualCo2Lbs === 0
+              ? `down to 0, from ${formatNumber(Math.round(result.keep.annualCo2Lbs))} lb`
+              : "less each year"}
+          </p>
         </div>
-        <div>
-          <dt className="text-muted">Payback</dt>
-          <dd className="font-medium">{paybackLabel(option.paybackMonths)}</dd>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="border border-line bg-white p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">Extra payment</p>
+          <p className="mt-1 text-3xl font-semibold tracking-tight">
+            {formatDollars(Math.max(0, worth.extraMonthlyCents))}/mo
+          </p>
+          <p className="text-sm">above today to switch</p>
         </div>
-      </dl>
+        <div className="border border-line bg-white p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">Fuel covers</p>
+          <p className="mt-1 text-3xl font-semibold tracking-tight">
+            {worth.fuelCoversShare === null ? "—" : formatPercent(worth.fuelCoversShare)}
+          </p>
+          <p className="text-sm">
+            of that extra payment
+            {worth.extraMonthlyCents > 0 ? `, net ${formatDollars(worth.netMonthlyCents)}/mo after fuel` : ""}
+          </p>
+        </div>
+      </div>
+      <p className="mt-3 text-sm">{worthCopy(option)}</p>
+      <p className="mt-3 text-sm">
+        <span className="text-muted">Payback from fuel savings. </span>
+        {paybackLabel(option)}.
+      </p>
       {option.negativeEquity ? (
         <p className="mt-3 text-sm">
           The trade is underwater by {formatDollars(Math.abs(option.equityCents))}. That shortfall is part of the next
@@ -206,12 +270,13 @@ export function SuggestionsPanel({ trip, result }: { trip: SavedTrip; result: Sw
         })}
       </div>
       <div className="mt-4">
-        {section === "savings" ? <SavingsPanel trip={trip} suggestion={suggestion} /> : null}
-        {section === "charging" ? <ChargingPanel trip={trip} suggestion={suggestion} /> : null}
-        {section === "emissions" ? <ImpactPanel trip={trip} suggestion={suggestion} /> : null}
+        <Swap id={`${option.id}-${section}`}>
+          {section === "savings" ? <SavingsPanel trip={trip} suggestion={suggestion} /> : null}
+          {section === "charging" ? <ChargingPanel trip={trip} suggestion={suggestion} /> : null}
+          {section === "emissions" ? <ImpactPanel trip={trip} suggestion={suggestion} /> : null}
+        </Swap>
       </div>
-      <p className="mt-4 text-sm text-muted">{COPY.noApproval}</p>
-      <p className="mt-1 text-sm text-muted">Example — synthetic, not actual Toyota Financial Services pricing.</p>
+      </Swap>
     </div>
   );
 }

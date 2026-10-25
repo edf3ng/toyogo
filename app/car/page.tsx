@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
-import { COPY } from "@/config/copy";
 import { PAINTS } from "@/config/vehicles";
 import { VehicleSilhouette } from "@/components/VehicleSilhouette";
 
@@ -38,21 +37,13 @@ export default function CarPage() {
             />
           ))}
         </div>
-        <p className="mt-2 text-sm">
-          {paint.name}. <span className="text-muted">{COPY.stylisedVehicle}</span>
-        </p>
+        <p className="mt-2 text-sm">{paint.name}.</p>
       </div>
-      <div className="mt-6 max-w-2xl border-t border-line pt-4 text-sm">
-        <p>{COPY.modelCredit}</p>
-        <p className="mt-2 text-muted">
-          One model stands in for every Toyota in the demo. It is not the car being scored.
-        </p>
-        <p className="mt-4">
-          <Link href="/" className="text-jade-800">
-            Back to the start
-          </Link>
-        </p>
-      </div>
+      <p className="mt-6 text-sm">
+        <Link href="/" className="text-jade-800">
+          Back to the start
+        </Link>
+      </p>
     </section>
   );
 }

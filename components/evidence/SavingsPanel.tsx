@@ -94,14 +94,21 @@ export function SavingsPanel({
       <p className="mt-2 text-sm text-muted">Cumulative fuel savings, in dollars. The line uses the slider.</p>
       <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
         <div className="border border-line p-3">
-          <p className="text-muted">This car, per 100 miles</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">Keep this car</p>
+          <p className="mt-1">
+            {trip.input.current.year} {trip.input.current.model}, per 100 miles
+          </p>
           <p className="mt-1 text-xl font-semibold">{formatDollars(currentPer100)}</p>
           <p className="text-muted">{currentEnergy.annualGallons.toFixed(0)} gallons a year at this pace</p>
         </div>
         <div className="border border-line p-3">
-          <p className="text-muted">{winner.powertrain === "bev" ? "Electricity" : "Next car"}, per 100 miles</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">If you switch</p>
+          <p className="mt-1">{winner.label}, per 100 miles</p>
           <p className="mt-1 text-xl font-semibold">{formatDollars(nextPer100)}</p>
-          <p className="text-muted">{winner.label}</p>
+          <p className="text-muted">
+            {formatDollars(priced.keep.annualEnergyCents)} a year now, {formatDollars(winner.annualEnergyCents)} on this
+            car
+          </p>
         </div>
       </div>
     </div>
