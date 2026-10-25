@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { priceDeal } from "@/lib/engine/deal";
 import { energyCost, paybackMonths } from "@/lib/engine/energy";
 import { recommendSwitch, type SwitchInput } from "@/lib/engine/switch";
+import { PRIORITY_KEYS } from "@/config/priorities";
+import { viabilityMultiplier } from "@/lib/engine/viability";
 
 describe("energy", () => {
   it("keeps a standard hybrid on petrol", () => {
@@ -126,6 +128,8 @@ describe("three different drives", () => {
     expect(result.winner.powertrain).toBe("bev");
     expect(result.winner.verdict).toBe("viable");
     expect(result.winner.label).toMatch(/bZ4X/);
+    const weighted = PRIORITY_KEYS.reduce((sum, key) => sum + result.winner.factors[key], 0);
+    expect(result.winner.score).toBeCloseTo(weighted * viabilityMultiplier(result.winner.verdict), 8);
   });
 
   it("sends a day longer than the plug-in range to a plug-in with a caveat", () => {

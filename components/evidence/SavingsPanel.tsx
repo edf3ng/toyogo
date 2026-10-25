@@ -4,10 +4,16 @@ import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { formatDollars } from "@/lib/format";
 import { energyCost } from "@/lib/engine/energy";
-import { recommendSwitch } from "@/lib/engine/switch";
+import { lookupOption } from "@/lib/engine/switch";
 import type { SavedTrip } from "@/lib/trip";
 
-export function SavingsPanel({ trip }: { trip: SavedTrip }) {
+export function SavingsPanel({
+  trip,
+  suggestion,
+}: {
+  trip: SavedTrip;
+  suggestion: { id: string | null; label: string };
+}) {
   const [daily, setDaily] = useState(trip.input.dailyMiles);
   const [gas, setGas] = useState(4.28);
 
@@ -20,19 +26,25 @@ export function SavingsPanel({ trip }: { trip: SavedTrip }) {
       .catch(() => undefined);
   }, []);
 
-  const result = recommendSwitch({
-    ...trip.input,
-    dailyMiles: daily,
-    gasDollarsPerGallon: gas,
-  });
-  const winner = result.winner;
+  const priced = suggestion.id
+    ? lookupOption({ ...trip.input, dailyMiles: daily, gasDollarsPerGallon: gas }, suggestion.id)
+    : undefined;
+  if (!priced) {
+    return (
+      <p>
+        Gas savings are not modelled for the {suggestion.label}. That suggestion is outside the priced line-up, so
+        this tab stays with this car only.
+      </p>
+    );
+  }
+  const winner = priced.option;
   const annual = winner.monthlyEnergySavingCents * 12;
   const chart = [0, 1, 2, 3, 4, 5].map((year) => ({
     year: `Year ${year}`,
     savings: Math.round((annual * year) / 100),
   }));
   const miles = Math.max(daily, 1) * 250;
-  const currentPer100 = (result.keep.annualEnergyCents / miles) * 100;
+  const currentPer100 = (priced.keep.annualEnergyCents / miles) * 100;
   const nextPer100 = (winner.annualEnergyCents / miles) * 100;
   const currentEnergy = energyCost({
     vehicle: {
