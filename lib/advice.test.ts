@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { buyableToday, ELECTRIFIED_CATALOG } from "@/config/electrified-catalog";
-import { buildPrompt, engineAdvice, figuresFor, parseAdvice, rankedOptions, recommendVehicle } from "@/lib/advice";
-import { recommendSwitch, type SwitchInput } from "@/lib/engine/switch";
+import { buildPrompt, engineAdvice, figuresFor, matchPick, parseAdvice, rankedOptions, recommendVehicle } from "@/lib/advice";
+import { CANDIDATES, recommendSwitch, type SwitchInput } from "@/lib/engine/switch";
 
 const INPUT: SwitchInput = {
   asOf: "2026-10-24",
@@ -87,6 +87,33 @@ describe("parseAdvice", () => {
     expect(parseAdvice(reply([{ ...GOOD[0], title: "" }]), options, catalog)).toBeNull();
     expect(parseAdvice(reply([{ ...GOOD[0], why: [] }]), options, catalog)).toBeNull();
     expect(parseAdvice(reply([{ ...GOOD[0], tradeoff: "" }]), options, catalog)).toBeNull();
+  });
+});
+
+describe("matchPick", () => {
+  const priced = recommendSwitch({ ...INPUT, candidates: CANDIDATES });
+  const lineup = [...priced.ranked, ...priced.aboveBudget];
+  const pick = (model: string, year: number) => ({
+    title: "Best fit",
+    model,
+    year,
+    powertrain: "hybrid" as const,
+    body: "",
+    why: ["Because."],
+    tradeoff: "Something.",
+  });
+
+  it("matches a catalogue name to the priced car of that year", () => {
+    expect(matchPick(pick("RAV4 Hybrid", 2025), lineup)?.id).toBe("48937");
+    expect(matchPick(pick("Camry Hybrid", 2024), lineup)?.id).toBe("47092");
+    expect(matchPick(pick("Prius Prime", 2025), lineup)?.id).toBe("49014");
+    expect(matchPick(pick("bZ4X", 2025), lineup)?.id).toBe("49126");
+  });
+
+  it("does not borrow figures from a different model year", () => {
+    expect(matchPick(pick("Prius c", 2018), lineup)).toBeUndefined();
+    expect(matchPick(pick("bZ", 2026), lineup)).toBeUndefined();
+    expect(matchPick(pick("RAV4 Hybrid", 2022), lineup)).toBeUndefined();
   });
 });
 

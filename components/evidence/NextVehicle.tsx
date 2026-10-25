@@ -11,43 +11,18 @@ const POWERTRAIN_LABEL: Record<Pick["powertrain"], string> = {
   bev: "Battery electric",
 };
 
-const dollars = (cents: number) =>
-  Math.round(cents / 100).toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-
-function Figures({ figures }: { figures: NonNullable<Pick["figures"]> }) {
-  const payback = Number.isFinite(figures.paybackMonths)
-    ? `${Math.round(figures.paybackMonths)} months`
-    : "Not on fuel alone";
-  return (
-    <dl className="mt-4 grid grid-cols-2 gap-3 border-t border-line pt-3 text-sm sm:grid-cols-4">
-      <div>
-        <dt className="text-muted">Example payment</dt>
-        <dd className="font-medium">{dollars(figures.paymentCents)}/mo</dd>
-      </div>
-      <div>
-        <dt className="text-muted">Fuel saved</dt>
-        <dd className="font-medium">{dollars(figures.annualFuelSavedCents)}/yr</dd>
-      </div>
-      <div>
-        <dt className="text-muted">CO2 avoided</dt>
-        <dd className="font-medium">{figures.co2AvoidedLbs.toLocaleString("en-US")} lb/yr</dd>
-      </div>
-      <div>
-        <dt className="text-muted">Payback</dt>
-        <dd className="font-medium">{payback}</dd>
-      </div>
-    </dl>
-  );
-}
-
-export function NextVehicle({ input }: { input: SwitchInput }) {
-  const [state, setState] = useState<"loading" | "none" | Advice>("loading");
+export function useVehicleAdvice(input: SwitchInput | null) {
+  const [advice, setAdvice] = useState<Advice | "loading" | "none">("loading");
   const [chosen, setChosen] = useState(0);
-  const key = JSON.stringify(input);
+  const key = input ? JSON.stringify(input) : "";
 
   useEffect(() => {
+    if (!key) {
+      setAdvice("loading");
+      return;
+    }
     const controller = new AbortController();
-    setState("loading");
+    setAdvice("loading");
     setChosen(0);
     fetch("/api/advice", {
       method: "POST",
@@ -57,51 +32,44 @@ export function NextVehicle({ input }: { input: SwitchInput }) {
     })
       .then((response) => response.json())
       .then((body: { advice?: Advice | null }) => {
-        if (!controller.signal.aborted) setState(body.advice ?? "none");
+        if (!controller.signal.aborted) setAdvice(body.advice?.picks?.length ? body.advice : "none");
       })
-      // An aborted fetch rejects as a plain TypeError in Safari, not an
-      // AbortError, so the signal is what says whether this run still counts.
       .catch(() => {
-        if (!controller.signal.aborted) setState("none");
+        if (!controller.signal.aborted) setAdvice("none");
       });
     return () => controller.abort();
   }, [key]);
 
-  if (state === "none") return null;
-
-  return (
-    <div className="mt-6 border-t border-line pt-4">
-      <h2 className="text-lg font-semibold">What to consider next</h2>
-      {state === "loading" ? (
-        <>
-          <p className="mt-1 text-sm text-muted">Weighing your miles, charging and budget…</p>
-          <RoadLoader />
-        </>
-      ) : (
-        <Picks advice={state} chosen={chosen} onChoose={setChosen} />
-      )}
-    </div>
-  );
+  const pick = typeof advice === "object" ? (advice.picks[chosen] ?? advice.picks[0]) : null;
+  return { advice, chosen, setChosen, pick };
 }
 
-function Picks({ advice, chosen, onChoose }: { advice: Advice; chosen: number; onChoose: (index: number) => void }) {
+export function SuggestionChoices({
+  advice,
+  chosen,
+  onChoose,
+}: {
+  advice: Advice;
+  chosen: number;
+  onChoose: (index: number) => void;
+}) {
   const pick = advice.picks[chosen] ?? advice.picks[0];
   return (
     <>
       <p className="mt-1 text-sm text-muted">
         {advice.source === "gemini"
-          ? "Three picked by Gemini from Toyota's electrified line-up, for your figures. Not an offer."
-          : "The scorer's own ranking. Not an offer."}
+          ? "Gemini's suggestions for this car. Each one has its own gas savings, charging, and emissions."
+          : "Gemini didn't answer, so these are the scorer's own options. Each one still has its own tabs."}
       </p>
-      <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Recommended vehicles">
+      <div className="mt-3 flex flex-wrap gap-2" role="tablist" aria-label="Suggested vehicles">
         {advice.picks.map((item, index) => (
           <button
-            key={item.model}
+            key={`${item.year}-${item.model}`}
             type="button"
             role="tab"
             id={`pick-tab-${index}`}
             aria-selected={index === chosen}
-            aria-controls={`pick-panel-${index}`}
+            aria-controls="suggestion-panel"
             onClick={() => onChoose(index)}
             className={`rounded-md border px-3 py-2 text-left text-sm ${
               index === chosen ? "border-jade bg-jade text-white" : "border-line bg-white text-ink"
@@ -114,11 +82,8 @@ function Picks({ advice, chosen, onChoose }: { advice: Advice; chosen: number; o
           </button>
         ))}
       </div>
-      <div role="tabpanel" id={`pick-panel-${chosen}`} aria-labelledby={`pick-tab-${chosen}`}>
-        <p className="mt-4 text-2xl font-semibold tracking-tight">
-          {pick.year} {pick.model}
-        </p>
-        <p className="text-sm text-muted">
+      <div id="suggestion-panel" role="tabpanel" aria-labelledby={`pick-tab-${chosen}`}>
+        <p className="mt-4 text-sm text-muted">
           {POWERTRAIN_LABEL[pick.powertrain]}
           {pick.body ? ` · ${pick.body}` : ""}
         </p>
@@ -131,14 +96,17 @@ function Picks({ advice, chosen, onChoose }: { advice: Advice; chosen: number; o
           <span className="text-muted">Trade-off: </span>
           {pick.tradeoff}
         </p>
-        {pick.figures ? (
-          <Figures figures={pick.figures} />
-        ) : (
-          <p className="mt-4 border-t border-line pt-3 text-sm text-muted">
-            This one is outside the priced line-up, so no payment or savings figures are modelled for it.
-          </p>
-        )}
       </div>
     </>
+  );
+}
+
+export function AdvicePending() {
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold tracking-tight">Checking this car</h1>
+      <p className="mt-3 text-sm text-muted">A suggestion waits until Gemini has chosen one.</p>
+      <RoadLoader />
+    </div>
   );
 }

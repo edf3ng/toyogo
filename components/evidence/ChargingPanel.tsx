@@ -3,8 +3,8 @@
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import type { ChargerPin } from "@/components/ChargingMap";
-import { recommendSwitch } from "@/lib/engine/switch";
 import type { SavedTrip } from "@/lib/trip";
+import type { Powertrain } from "@/types";
 
 const ChargingMap = dynamic(() => import("@/components/ChargingMap"), { ssr: false });
 
@@ -18,13 +18,18 @@ function milesApart(lat1: number, lon1: number, lat2: number, lon2: number): num
   return 3958.7613 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export function ChargingPanel({ trip }: { trip: SavedTrip }) {
+export function ChargingPanel({
+  trip,
+  suggestion,
+}: {
+  trip: SavedTrip;
+  suggestion: { label: string; powertrain: Powertrain };
+}) {
   const [miles, setMiles] = useState(10);
   const [center, setCenter] = useState({ lat: 30.267, lon: -97.743, place: trip.place || "Austin" });
   const [stations, setStations] = useState<ChargerPin[]>([]);
   const [source, setSource] = useState("");
-  const winner = recommendSwitch(trip.input).winner;
-  const hybrid = winner.powertrain === "hybrid" || winner.powertrain === "gas";
+  const hybrid = suggestion.powertrain === "hybrid" || suggestion.powertrain === "gas";
 
   useEffect(() => {
     fetch(`/api/geo?zip=${trip.zip || "78704"}`)
@@ -59,8 +64,8 @@ export function ChargingPanel({ trip }: { trip: SavedTrip }) {
   if (hybrid) {
     return (
       <p>
-        A standard hybrid does not plug in. It runs on petrol and charges its own small battery while driving. No
-        charging stop is needed, and there is no map for this recommendation.
+        The {suggestion.label} is a standard hybrid. It runs on petrol and charges its own small battery while
+        driving. No charging stop is needed, and there is no map for this suggestion.
       </p>
     );
   }

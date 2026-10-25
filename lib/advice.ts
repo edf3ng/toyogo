@@ -100,6 +100,30 @@ export function rankedOptions(result: SwitchResult): RankedSwitch[] {
   return [result.winner, ...result.runners];
 }
 
+/** Collapse trim and drivetrain words so a catalogue name can meet a priced car. */
+function family(value: string): string {
+  const words = value
+    .toLowerCase()
+    .replace(/\b(awd|fwd|4wd|4x4|eawd)\b/gi, " ")
+    .split(/[^a-z0-9]+/)
+    .filter((word) => word && !TRIM_WORDS.has(word));
+  const text = words.join("");
+  const has = (word: string) => words.includes(word);
+  if (has("rav4") && (has("prime") || has("plug") || text.includes("phev"))) return "rav4-phev";
+  if (has("rav4")) return "rav4-hybrid";
+  if (has("prius") && (has("prime") || has("plug") || text.includes("phev"))) return "prius-phev";
+  if (text === "bz" || text === "bz4x") return "bz4x";
+  return text;
+}
+
+/** The priced car behind a Gemini pick, only when the model year is the one we score. */
+export function matchPick(pick: Pick, options: RankedSwitch[]): RankedSwitch | undefined {
+  const wanted = family(pick.model);
+  return options.find(
+    (option) => option.year === pick.year && (family(option.model) === wanted || family(option.label) === wanted),
+  );
+}
+
 export function buildPrompt(input: SwitchInput, options: RankedSwitch[], catalog: CatalogEntry[]): string {
   const car = input.current;
   const priced = options

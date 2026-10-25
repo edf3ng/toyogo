@@ -385,4 +385,11 @@ function scoreCandidate(
   };
 }
 
+/** Figures for one priced vehicle, including cars outside this driver's class filter. */
+export function lookupOption(input: SwitchInput, id: string): { option: RankedSwitch; keep: RankedSwitch } | undefined {
+  const result = recommendSwitch({ ...input, candidates: CANDIDATES });
+  const option = [...result.ranked, ...result.aboveBudget].find((item) => item.id === id);
+  return option ? { option, keep: result.keep } : undefined;
+}
+
 export { CANDIDATES };
