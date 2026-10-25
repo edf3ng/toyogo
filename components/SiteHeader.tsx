@@ -39,8 +39,8 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
               Log in
             </Link>
           )}
-          <Link href="/signup" className="rounded-md bg-jade px-3 py-2 font-medium text-white hover:bg-jade-800">
-            Sign up
+          <Link href={name ? "/dashboard" : "/signup"} className="rounded-md bg-jade px-3 py-2 font-medium text-white hover:bg-jade-800">
+            {name ? "Analytics" : "Sign up"}
           </Link>
         </nav>
       </div>
