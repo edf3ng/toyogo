@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { priceDeal } from "@/lib/engine/deal";
-import { energyCost, paybackMonths } from "@/lib/engine/energy";
+import { energyCost, paybackMonths, switchWorth } from "@/lib/engine/energy";
 import { recommendSwitch, type SwitchInput } from "@/lib/engine/switch";
 import { PRIORITY_KEYS } from "@/config/priorities";
 import { viabilityMultiplier } from "@/lib/engine/viability";
@@ -69,6 +69,26 @@ describe("payback", () => {
     expect(paybackMonths(-100, 500)).toBe(0);
     expect(paybackMonths(0, 500)).toBe(0);
     expect(paybackMonths(400, 0)).toBe(Number.POSITIVE_INFINITY);
+  });
+});
+
+describe("switchWorth", () => {
+  it("says how much of the extra payment cheaper fuel covers", () => {
+    const worth = switchWorth({ paymentDeltaCents: 30_100, monthlyEnergySavingCents: 3_208 });
+    expect(worth.annualFuelSaveCents).toBe(38_496);
+    expect(worth.extraYearCents).toBe(361_200);
+    expect(worth.fuelCoversShare).toBeCloseTo(3208 / 30100, 5);
+    expect(worth.netMonthlyCents).toBe(26_892);
+    expect(worth.fiveYearFuelCents).toBe(192_480);
+    expect(worth.fiveYearExtraCents).toBe(1_806_000);
+    expect(worth.paybackMonths).toBeCloseTo(30100 / 3208, 5);
+  });
+
+  it("leaves the cover share empty when the payment does not rise", () => {
+    const worth = switchWorth({ paymentDeltaCents: 0, monthlyEnergySavingCents: 5_000 });
+    expect(worth.fuelCoversShare).toBeNull();
+    expect(worth.netMonthlyCents).toBe(-5_000);
+    expect(worth.paybackMonths).toBe(0);
   });
 });
 
