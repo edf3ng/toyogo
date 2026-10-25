@@ -2,7 +2,7 @@
 
 import { OrbitControls, useGLTF } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
-import { Suspense, useLayoutEffect, useMemo } from "react";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import * as THREE from "three";
 import { BODY_MATERIAL_NAME } from "@/config/vehicles";
 
@@ -89,11 +89,20 @@ export default function VehicleViewer({
 }) {
   const hero = frame === "hero";
   const stage = frame === "stage";
+  const [spin, setSpin] = useState(true);
+
+  useEffect(() => {
+    const media = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const sync = () => setSpin(!media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
 
   return (
     <div
       role={hero ? "application" : undefined}
-      aria-label={hero ? "Car model. Drag to rotate." : undefined}
+      aria-label={hero ? "Car model turning slowly. Drag to rotate." : undefined}
       className={
         hero
           ? "h-full w-full cursor-grab bg-white active:cursor-grabbing"
@@ -122,6 +131,8 @@ export default function VehicleViewer({
           <meshStandardMaterial color={hero ? "#d4d4d4" : "#d7d1c7"} />
         </mesh>
         <OrbitControls
+          autoRotate={spin}
+          autoRotateSpeed={1.5}
           enablePan={false}
           enableZoom={!hero}
           enableRotate
