@@ -25,7 +25,7 @@ export function TradeInPanel({ trip }: { trip: SavedTrip }) {
         {trip.acquired ? ` · acquired ${trip.acquired === "cpo" ? "certified pre-owned" : trip.acquired}` : ""}
         {trip.purchasedOn ? ` · ${trip.purchasedOn}` : ""}
       </p>
-      <p className="mt-4 text-sm text-muted">Estimated trade-in</p>
+      <h2 className="mt-4 text-lg font-semibold">Trade-in</h2>
       <p className="text-4xl font-semibold tracking-tight">{formatDollars(result.valuation.tradeInCents)}</p>
       <p className="mt-2 text-sm">
         Modelled range {formatDollars(result.valuation.retailLowCents)} to{" "}
@@ -56,18 +56,6 @@ export function TradeInPanel({ trip }: { trip: SavedTrip }) {
             : `Equity: ${formatDollars(result.equityCents)}.`}
         </p>
       </div>
-      <h2 className="mt-6 text-lg font-semibold">Electrified options</h2>
-      <ul className="mt-3 grid gap-3">
-        {[result.winner, ...result.runners].map((option) => (
-          <li key={option.id} className="border border-line bg-white p-3 text-sm">
-            <p className="font-medium">{option.label}</p>
-            <p className="mt-1 text-muted">
-              Example payment {formatDollars(option.paymentCents)}/mo. Amount financed{" "}
-              {formatDollars(option.amountFinancedCents)}, including example tax.
-            </p>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

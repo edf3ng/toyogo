@@ -69,6 +69,8 @@ export interface RankedSwitch {
   limiting: keyof Gates | null;
   gates: Gates;
   score: number;
+  /** Each priority's weight times its normalized benefit, before the viability multiplier. */
+  factors: Record<PriorityKey, number>;
   removed: boolean;
   removeReason?: string;
   paymentCents: Cents;
@@ -133,6 +135,10 @@ function currentPaymentCents(contract: Contract): Cents {
   }
   if (contract.kind === "lease") return leaseMonthlyCents(contract);
   return 0;
+}
+
+function blankFactors(): Record<PriorityKey, number> {
+  return { payment: 0, total: 0, fuel: 0, co2: 0, practical: 0, performance: 0 };
 }
 
 function monthsRemaining(contract: Contract): number {
@@ -208,6 +214,7 @@ export function recommendSwitch(input: SwitchInput): SwitchResult {
     limiting: null,
     gates: { charging: null, daily: null, budget: 1, equity: 1, payback: 1 },
     score: 0,
+    factors: blankFactors(),
     removed: false,
     paymentCents: paymentNow,
     paymentDeltaCents: 0,
@@ -247,11 +254,15 @@ export function recommendSwitch(input: SwitchInput): SwitchResult {
   const scoring = drafts.filter((draft) => !draft.option.removed);
   const keys: PriorityKey[] = ["payment", "total", "fuel", "co2", "practical", "performance"];
   scoring.forEach((draft, index) => {
+    const factors = blankFactors();
     let weighted = 0;
     for (const key of keys) {
       const column = scoring.map((item) => item.benefits[key]);
-      weighted += (weights[key] ?? 0) * norm(column, index);
+      const share = (weights[key] ?? 0) * norm(column, index);
+      factors[key] = share;
+      weighted += share;
     }
+    draft.option.factors = factors;
     draft.option.score = weighted * viabilityMultiplier(draft.option.verdict);
   });
 
@@ -354,6 +365,7 @@ function scoreCandidate(
     limiting: limitingGate(gates),
     gates,
     score: 0,
+    factors: blankFactors(),
     removed,
     removeReason: removed ? "Payment is more than 25% above the stated budget." : undefined,
     paymentCents: deal.paymentCents,
@@ -383,6 +395,13 @@ function scoreCandidate(
       performance: car.horsepower,
     },
   };
+}
+
+/** Figures for one priced vehicle, including cars outside this driver's class filter. */
+export function lookupOption(input: SwitchInput, id: string): { option: RankedSwitch; keep: RankedSwitch } | undefined {
+  const result = recommendSwitch({ ...input, candidates: CANDIDATES });
+  const option = [...result.ranked, ...result.aboveBudget].find((item) => item.id === id);
+  return option ? { option, keep: result.keep } : undefined;
 }
 
 export { CANDIDATES };

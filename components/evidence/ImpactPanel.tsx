@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { formatNumber } from "@/lib/format";
-import { recommendSwitch } from "@/lib/engine/switch";
+import { lookupOption } from "@/lib/engine/switch";
 import type { SavedTrip } from "@/lib/trip";
 
 const MAX_DOTS = 72;
@@ -117,11 +117,26 @@ function EmissionField({ pounds, scale }: { pounds: number; scale: number }) {
   );
 }
 
-export function ImpactPanel({ trip }: { trip: SavedTrip }) {
+export function ImpactPanel({
+  trip,
+  suggestion,
+}: {
+  trip: SavedTrip;
+  suggestion: { id: string | null; label: string };
+}) {
   const [annual, setAnnual] = useState(trip.input.dailyMiles * 250);
-  const result = recommendSwitch({ ...trip.input, dailyMiles: annual / 250 });
-  const keep = Math.max(0, result.keep.annualCo2Lbs);
-  const next = Math.max(0, result.winner.annualCo2Lbs);
+  const priced = suggestion.id
+    ? lookupOption({ ...trip.input, dailyMiles: annual / 250 }, suggestion.id)
+    : undefined;
+  if (!priced) {
+    return (
+      <p>
+        Tailpipe CO2 is not modelled for the {suggestion.label}. That suggestion is outside the priced line-up.
+      </p>
+    );
+  }
+  const keep = Math.max(0, priced.keep.annualCo2Lbs);
+  const next = Math.max(0, priced.option.annualCo2Lbs);
   const avoided = Math.max(0, keep - next);
   const scale = Math.max(keep, 1);
 
@@ -143,7 +158,7 @@ export function ImpactPanel({ trip }: { trip: SavedTrip }) {
         />
       </label>
       <p className="mt-4 text-4xl font-semibold tracking-tight">{formatNumber(Math.round(avoided))} lb</p>
-      <p className="text-sm text-muted">less tailpipe CO2 a year on {result.winner.label}.</p>
+      <p className="text-sm text-muted">less tailpipe CO2 a year on {priced.option.label}.</p>
       <div className="mt-6 grid grid-cols-2 items-end gap-4">
         <figure>
           <EmissionField pounds={keep} scale={scale} />
@@ -155,7 +170,7 @@ export function ImpactPanel({ trip }: { trip: SavedTrip }) {
         <figure>
           <EmissionField pounds={next} scale={scale} />
           <figcaption className="mt-2 text-sm">
-            {result.winner.label}
+            {priced.option.label}
             <span className="mt-1 block font-medium">{formatNumber(Math.round(next))} lb</span>
           </figcaption>
         </figure>

@@ -85,7 +85,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
                     className="block px-4 py-2 text-ink hover:bg-paper focus-visible:bg-paper"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Analytics
+                    Summary
                   </Link>
                   <Link
                     href="/signup"
