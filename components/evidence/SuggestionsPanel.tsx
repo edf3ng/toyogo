@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PRIORITY_COPY } from "@/config/priorities";
+import { Swap } from "@/components/appear";
 import { ChargingPanel } from "@/components/evidence/ChargingPanel";
 import { ImpactPanel } from "@/components/evidence/ImpactPanel";
 import { SavingsPanel } from "@/components/evidence/SavingsPanel";
@@ -175,6 +176,7 @@ export function SuggestionsPanel({
           );
         })}
       </div>
+      <Swap id={option.id}>
       <p className="mt-5 text-sm text-jade-800">{POWERTRAIN_LABEL[option.powertrain]}</p>
       <h2 className="text-2xl font-semibold tracking-tight">{option.label}</h2>
       <div className="mt-4 grid grid-cols-2 gap-3">
@@ -259,10 +261,13 @@ export function SuggestionsPanel({
         })}
       </div>
       <div className="mt-4">
-        {section === "savings" ? <SavingsPanel trip={trip} suggestion={suggestion} /> : null}
-        {section === "charging" ? <ChargingPanel trip={trip} suggestion={suggestion} /> : null}
-        {section === "emissions" ? <ImpactPanel trip={trip} suggestion={suggestion} /> : null}
+        <Swap id={`${option.id}-${section}`}>
+          {section === "savings" ? <SavingsPanel trip={trip} suggestion={suggestion} /> : null}
+          {section === "charging" ? <ChargingPanel trip={trip} suggestion={suggestion} /> : null}
+          {section === "emissions" ? <ImpactPanel trip={trip} suggestion={suggestion} /> : null}
+        </Swap>
       </div>
+      </Swap>
     </div>
   );
 }

@@ -95,8 +95,6 @@ export default function HandoffPage() {
         </>
       ) : null}
 
-      <p className="text-sm">{COPY.noApproval}</p>
-
       <button
         type="button"
         className="no-print mt-6 h-11 rounded-md bg-jade px-4 text-sm font-medium text-white"
