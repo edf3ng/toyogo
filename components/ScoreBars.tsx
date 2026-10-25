@@ -63,10 +63,7 @@ export function ScoreBars({ factors }: { factors: Record<PriorityKey, number> })
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <p className="mt-2 text-sm text-muted">
-        Each bar is that priority’s share of the score, not a dollar amount. Payment is 0 when this
-        car has the largest payment increase in the compared set.
-      </p>
+      <p className="mt-2 text-sm text-muted">Share of the score, not dollars. Payment is 0 when this car costs the most extra.</p>
     </div>
   );
 }

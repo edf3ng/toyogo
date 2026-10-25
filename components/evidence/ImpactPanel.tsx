@@ -171,9 +171,7 @@ export function ImpactPanel({
   return (
     <div>
       <p className="text-sm text-muted">
-        Each dot is a share of yearly tailpipe CO2. The left box is keeping the {keepName}. The right box is the same
-        miles on the {priced.option.label}. A battery EV is 0 grams at the tailpipe. Making the electricity is not in
-        this figure.
+        Tailpipe only. Left is the {keepName}; right is the {priced.option.label}. A battery EV is 0 at the tailpipe.
       </p>
       <label className="mt-4 block text-sm font-medium">
         {formatNumber(annual)} miles a year

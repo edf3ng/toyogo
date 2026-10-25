@@ -70,8 +70,31 @@ function pick(amounts: number[], share: number): number {
   return amounts[index];
 }
 
+function yearForRow(item: SearchRow, fallback: number): number {
+  const fromLabel = item.label.match(/curve (\d{4})/);
+  if (fromLabel) return Number(fromLabel[1]);
+  const fromQuery = item.q.match(/\b(20\d{2})\b/);
+  return fromQuery ? Number(fromQuery[1]) : fallback;
+}
+
+/** Mid asking price per model year, only where a snippet quoted a dollar amount. */
+export function curveFromSnippets(q: MarketQuery, years: number[], results: SearchRow[]): MarketValue["curve"] {
+  const byYear = new Map<number, number[]>();
+  for (const item of results) {
+    const modelYear = yearForRow(item, q.year);
+    if (!years.includes(modelYear)) continue;
+    const list = byYear.get(modelYear) ?? [];
+    for (const row of item.rows) list.push(...dollarsFromText(`${row.title} ${row.snippet}`));
+    byYear.set(modelYear, list);
+  }
+  return years.flatMap((modelYear) => {
+    const list = (byYear.get(modelYear) ?? []).sort((a, b) => a - b);
+    return list.length > 0 ? [{ modelYear, midDollars: pick(list, 0.5) }] : [];
+  });
+}
+
 /** Conservative ranges from the search snippets only. Never invents a figure. */
-export function marketFromSnippets(q: MarketQuery, _years: number[], results: SearchRow[]): MarketValue | null {
+export function marketFromSnippets(q: MarketQuery, years: number[], results: SearchRow[]): MarketValue | null {
   const amounts = results
     .flatMap((item) => item.rows.flatMap((row) => dollarsFromText(`${row.title} ${row.snippet}`)))
     .sort((a, b) => a - b);
@@ -110,7 +133,8 @@ export function marketFromSnippets(q: MarketQuery, _years: number[], results: Se
     if (comparables.length === 5) break;
   }
 
-  const curve = [{ modelYear: q.year, midDollars: retailMid }];
+  const curve = curveFromSnippets(q, years, results);
+  if (curve.length === 0) curve.push({ modelYear: q.year, midDollars: retailMid });
 
   return {
     tradeIn,
@@ -194,11 +218,14 @@ function finalize(value: MarketValue): MarketValue {
 export async function marketValue(q: MarketQuery, serpKey: string, geminiKey: string, model: string): Promise<MarketValue> {
   const car = /toyota/i.test(q.model) ? q.model : `Toyota ${q.model}`;
   const years = curveYears(q.year);
-  // Three searches finish inside a Vercel window. Extra curve-year queries were dropping the whole call.
+  // These run together. Extra years feed the Analytics graph and do not add wait time.
   const queries = [
     { label: "price at this mileage", q: `${q.year} ${car} ${q.miles} miles used price` },
     { label: "trade-in value", q: `KBB trade-in value ${q.year} ${car}` },
     { label: "comparable listings", q: `${q.year} ${car} used for sale cargurus` },
+    ...years
+      .filter((year) => year !== q.year)
+      .map((year) => ({ label: `curve ${year}`, q: `${year} ${car} used price average` })),
   ];
   const failures: string[] = [];
   const settled = await Promise.all(
@@ -232,7 +259,12 @@ export async function marketValue(q: MarketQuery, serpKey: string, geminiKey: st
         deadlineMs: GEMINI_DEADLINE_MS,
         attemptTimeoutMs: GEMINI_ATTEMPT_MS,
       });
-      return finalize(JSON.parse(text) as MarketValue);
+      const value = finalize(JSON.parse(text) as MarketValue);
+      if (value.curve.length < 2) {
+        const fromSearch = curveFromSnippets(q, years, results);
+        if (fromSearch.length > value.curve.length) value.curve = fromSearch;
+      }
+      return finalize(value);
     } catch {
       // Search already succeeded. Keep those figures when the model is busy or the host cuts us off.
     }

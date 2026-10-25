@@ -28,7 +28,7 @@ function MarketLoading() {
 
   return (
     <div className="mt-6 border-t border-line pt-4">
-      <h2 className="text-lg font-semibold">Market price</h2>
+      <h2 className="text-lg font-semibold">Live market</h2>
       <p className="mt-1 flex items-baseline justify-between gap-3 text-sm text-muted">
         <span aria-live="polite">{waitingLine(seconds)}</span>
         <span className="tabular-nums">{seconds}s</span>
@@ -99,8 +99,8 @@ export function MarketValue({
   const here = state.curve.find((p) => p.modelYear === year);
   return (
     <div className="mt-6 border-t border-line pt-4">
-      <h2 className="text-lg font-semibold">Market price</h2>
-      <p className="mt-1 text-sm text-muted">From Google results (KBB, Edmunds, CarGurus), read by Gemini. Not a quote.</p>
+      <h2 className="text-lg font-semibold">Live market</h2>
+      <p className="mt-1 text-sm text-muted">KBB, Edmunds, and CarGurus listings. Not a quote.</p>
       <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
         <div>
           <dt className="text-muted">Trade-in range</dt>
@@ -117,7 +117,12 @@ export function MarketValue({
           <dd className="text-muted">Mid {dollars(state.retail.midDollars)}</dd>
         </div>
       </dl>
-      <p className="mt-3 text-sm">{state.notes}</p>
+      {state.notes ? (
+        <details className="mt-3">
+          <summary className="text-sm text-muted">How these ranges were read</summary>
+          <p className="mt-2 text-sm">{state.notes}</p>
+        </details>
+      ) : null}
       {state.comparables.length > 0 ? (
         <ul className="mt-3 grid gap-2 text-sm">
           {state.comparables.map((c, index) => (

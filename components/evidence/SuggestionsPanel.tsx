@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PRIORITY_COPY } from "@/config/priorities";
 import { Swap } from "@/components/appear";
 import { ChargingPanel } from "@/components/evidence/ChargingPanel";
@@ -9,6 +9,8 @@ import { SavingsPanel } from "@/components/evidence/SavingsPanel";
 import { ScoreBars } from "@/components/ScoreBars";
 import { formatDollars, formatNumber, formatPercent } from "@/lib/format";
 import { switchWorth } from "@/lib/engine/energy";
+import { ToyotaMark } from "@/components/ToyotaMark";
+import { buyInventoryUrl } from "@/lib/shop";
 import type { RankedSwitch, SwitchResult } from "@/lib/engine/switch";
 import type { ExplainFacts } from "@/lib/explain";
 import type { SavedTrip } from "@/lib/trip";
@@ -36,32 +38,109 @@ const VERDICT_LABEL: Record<RankedSwitch["verdict"], string> = {
 
 const PLACE = ["first", "second", "third"];
 
-function paybackLabel(option: RankedSwitch): string {
-  const worth = switchWorth(option);
-  if (worth.extraMonthlyCents <= 0) return "The payment is not higher than today";
-  if (option.monthlyEnergySavingCents <= 0) return "Fuel does not fall, so it does not offset the extra payment";
-  if (worth.netMonthlyCents <= 0 && Number.isFinite(worth.paybackMonths)) {
-    return `${Math.round(worth.paybackMonths)} months for fuel savings to cover the extra payment`;
-  }
-  if (worth.fuelCoversShare === null) return "Fuel savings alone don't cover the extra payment";
-  return `Fuel covers ${formatPercent(worth.fuelCoversShare)} of each extra payment, so the extra payment does not pay back from fuel alone`;
-}
+function CarPicker({
+  options,
+  index,
+  onChange,
+}: {
+  options: RankedSwitch[];
+  index: number;
+  onChange: (index: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const current = options[index];
 
-function worthCopy(option: RankedSwitch): string {
-  const worth = switchWorth(option);
-  if (worth.extraMonthlyCents <= 0) {
-    return `The example payment is not higher than today. Fuel still ${
-      worth.annualFuelSaveCents >= 0 ? "saves" : "costs"
-    } ${formatDollars(Math.abs(worth.annualFuelSaveCents))} a year.`;
-  }
-  if (worth.fuelCoversShare === null) {
-    return `The extra payment is ${formatDollars(worth.extraMonthlyCents)}/mo.`;
-  }
-  const share = formatPercent(worth.fuelCoversShare);
-  if (worth.netMonthlyCents <= 0) {
-    return `Fuel saves ${formatDollars(option.monthlyEnergySavingCents)}/mo and more than covers the extra ${formatDollars(worth.extraMonthlyCents)}/mo payment. You are ${formatDollars(Math.abs(worth.netMonthlyCents))}/mo ahead after fuel. Over 5 years, fuel saves ${formatDollars(worth.fiveYearFuelCents)} against ${formatDollars(worth.fiveYearExtraCents)} of extra payments.`;
-  }
-  return `Fuel saves ${formatDollars(option.monthlyEnergySavingCents)}/mo, which is ${share} of the extra ${formatDollars(worth.extraMonthlyCents)}/mo payment. After fuel, the switch costs ${formatDollars(worth.netMonthlyCents)}/mo. Over 5 years, fuel saves ${formatDollars(worth.fiveYearFuelCents)} against ${formatDollars(worth.fiveYearExtraCents)} of extra payments.`;
+  useEffect(() => {
+    if (!open) return;
+    function close(event: Event) {
+      if (event.target instanceof Node && !root.current?.contains(event.target)) setOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        onChange(Math.min(options.length - 1, index + 1));
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        onChange(Math.max(0, index - 1));
+      }
+    }
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, index, options.length, onChange]);
+
+  if (!current) return null;
+
+  return (
+    <div ref={root} className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Suggested car"
+        className="flex w-full items-center gap-3 rounded-md border border-line bg-white px-3 py-2.5 text-left hover:border-jade"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-jade text-sm font-semibold text-white">
+          {index + 1}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-medium">{current.label}</span>
+          <span className="block text-xs text-muted">
+            {POWERTRAIN_LABEL[current.powertrain]} · {VERDICT_LABEL[current.verdict]}
+          </span>
+        </span>
+        <span aria-hidden="true" className="text-muted">
+          {open ? "▴" : "▾"}
+        </span>
+      </button>
+      {open ? (
+        <ul
+          role="listbox"
+          aria-label="Suggested cars"
+          className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-line bg-white shadow-lg"
+        >
+          {options.map((item, itemIndex) => {
+            const selected = itemIndex === index;
+            return (
+              <li key={item.id} role="option" aria-selected={selected}>
+                <button
+                  type="button"
+                  className={`flex w-full items-center gap-3 px-3 py-2.5 text-left ${
+                    selected ? "bg-paper" : "hover:bg-paper"
+                  }`}
+                  onClick={() => {
+                    onChange(itemIndex);
+                    setOpen(false);
+                  }}
+                >
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${
+                      selected ? "bg-jade text-white" : "border border-line text-ink"
+                    }`}
+                  >
+                    {itemIndex + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{item.label}</span>
+                    <span className="block text-xs text-muted">
+                      {POWERTRAIN_LABEL[item.powertrain]} · {VERDICT_LABEL[item.verdict]}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </div>
+  );
 }
 
 function scoreSentence(option: RankedSwitch, rank: number, count: number): string {
@@ -158,36 +237,27 @@ export function SuggestionsPanel({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Suggestions</h1>
-      <p className="mt-1 text-sm text-muted">Ranked from your priorities. The score picks the car.</p>
-      <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Suggested cars">
-        {options.map((item, itemIndex) => {
-          const selected = item.id === option.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              className={`rounded-md border px-3 py-2 text-left text-sm ${
-                selected ? "border-jade bg-jade text-white" : "border-line bg-white text-ink"
-              }`}
-              onClick={() => setIndex(itemIndex)}
-            >
-              <span className="block font-medium">{item.label}</span>
-              <span className={`block text-xs ${selected ? "text-white/80" : "text-muted"}`}>
-                Ranked {itemIndex + 1} · {VERDICT_LABEL[item.verdict]}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <CarPicker options={options} index={index} onChange={setIndex} />
       <Swap id={option.id}>
-      <p className="mt-5 flex flex-wrap items-baseline gap-x-2 text-sm">
-        <span className="text-jade-800">{POWERTRAIN_LABEL[option.powertrain]}</span>
-        <span>{VERDICT_LABEL[option.verdict]}</span>
-      </p>
-      <h2 className="text-2xl font-semibold tracking-tight">{option.label}</h2>
+      <a
+        href={buyInventoryUrl(option.model, option.label, trip.zip)}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 flex items-center gap-3 rounded-md border border-line bg-white px-3 py-2.5 hover:border-jade hover:bg-paper"
+      >
+        <span className="flex h-12 w-[4.75rem] shrink-0 items-center justify-center">
+          <ToyotaMark className="h-11 w-[4.5rem] object-contain" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium">Find one to buy</span>
+          <span className="block text-xs text-muted">
+            Toyota inventory{trip.zip ? ` near ${trip.zip}` : ""}. Opens in a new tab.
+          </span>
+        </span>
+        <span aria-hidden="true" className="text-jade-800">
+          ↗
+        </span>
+      </a>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div className="border border-line bg-white p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted">Fuel if you switch</p>
@@ -195,8 +265,7 @@ export function SuggestionsPanel({
             {formatDollars(Math.abs(option.monthlyEnergySavingCents * 12))}
           </p>
           <p className="text-sm">
-            {option.monthlyEnergySavingCents >= 0 ? "less each year" : "more each year"} than the{" "}
-            {result.keep.year} {result.keep.model}
+            {option.monthlyEnergySavingCents >= 0 ? "less" : "more"} a year vs {result.keep.year} {result.keep.model}
           </p>
         </div>
         <div className="border border-line bg-white p-3">
@@ -217,7 +286,7 @@ export function SuggestionsPanel({
           <p className="mt-1 text-3xl font-semibold tracking-tight">
             {formatDollars(Math.max(0, worth.extraMonthlyCents))}/mo
           </p>
-          <p className="text-sm">above today to switch</p>
+          <p className="text-sm">above today</p>
         </div>
         <div className="border border-line bg-white p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted">Fuel covers</p>
@@ -225,26 +294,20 @@ export function SuggestionsPanel({
             {worth.fuelCoversShare === null ? "—" : formatPercent(worth.fuelCoversShare)}
           </p>
           <p className="text-sm">
-            of that extra payment
-            {worth.extraMonthlyCents > 0 ? `, net ${formatDollars(worth.netMonthlyCents)}/mo after fuel` : ""}
+            of extra payment
+            {worth.extraMonthlyCents > 0 ? ` · ${formatDollars(worth.netMonthlyCents)}/mo after fuel` : ""}
           </p>
         </div>
       </div>
-      <p className="mt-3 text-sm">{worthCopy(option)}</p>
-      <p className="mt-3 text-sm">
-        <span className="text-muted">Payback from fuel savings. </span>
-        {paybackLabel(option)}.
-      </p>
       {option.negativeEquity ? (
         <p className="mt-3 text-sm">
-          The trade is underwater by {formatDollars(Math.abs(option.equityCents))}. That shortfall is part of the next
-          amount financed, and it is shown on its own.
+          Underwater by {formatDollars(Math.abs(option.equityCents))}. That shortfall is in the next amount financed.
         </p>
       ) : null}
-      <details open className="mt-4 border border-line bg-white p-3">
+      <details className="mt-4 border border-line bg-white p-3">
         <summary className="text-sm font-medium">Why this score</summary>
         <p className="mt-3 text-sm">{scoreSentence(option, rank, options.length)}</p>
-        <p className="mt-2 text-sm text-muted">Your priorities, highest first: {priorities || "none ranked"}.</p>
+        <p className="mt-2 text-sm text-muted">Priorities, highest first: {priorities || "none ranked"}.</p>
         <div className="mt-3">
           <ScoreBars factors={option.factors} />
         </div>

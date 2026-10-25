@@ -73,7 +73,7 @@ export function Roadside() {
           ) : null}
           {trip && result ? (
             <>
-              <div className="flex flex-wrap gap-2" role="tablist" aria-label="Dashboard">
+              <div className="grid grid-cols-2 rounded-md border border-line bg-white p-0.5" role="tablist" aria-label="Dashboard">
                 {PAGES.map((item) => {
                   const selected = item.id === page;
                   return (
@@ -82,8 +82,8 @@ export function Roadside() {
                       type="button"
                       role="tab"
                       aria-selected={selected}
-                      className={`rounded-md px-3 py-2 text-sm font-medium ${
-                        selected ? "bg-jade text-white" : "border border-line bg-white text-ink"
+                      className={`rounded-[5px] px-3 py-2 text-sm font-medium ${
+                        selected ? "bg-jade text-white" : "text-ink hover:bg-paper"
                       }`}
                       onClick={() =>
                         router.replace(item.id === "analytics" ? "/dashboard" : `/dashboard?tab=${item.id}`, {
@@ -99,11 +99,7 @@ export function Roadside() {
               <div className="mt-5">
                 <Swap id={page}>
                   {page === "analytics" ? (
-                    <div>
-                      <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-                      <p className="mt-1 text-sm text-muted">Trade-in and market price for the car you have now.</p>
-                      <TradeInPanel trip={trip} />
-                    </div>
+                    <TradeInPanel trip={trip} />
                   ) : (
                     <SuggestionsPanel trip={trip} result={result} onSelect={setPicked} />
                   )}
