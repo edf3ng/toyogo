@@ -4,6 +4,8 @@ import { OrbitControls, useGLTF } from "@react-three/drei";
 import { Canvas, useThree } from "@react-three/fiber";
 import { Suspense, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import * as THREE from "three";
+import { ModelBoundary } from "@/components/ModelBoundary";
+import { VehicleSilhouette } from "@/components/VehicleSilhouette";
 import { BODY_MATERIAL_NAME } from "@/config/vehicles";
 
 const MODEL_URL = "/models/camry.glb?v=2";
@@ -100,45 +102,49 @@ export default function VehicleViewer({
   }, []);
 
   return (
-    <div
-      role={hero ? "application" : undefined}
-      aria-label={hero ? "Car model turning slowly. Drag to rotate." : undefined}
-      className={
-        hero
-          ? "h-full w-full cursor-grab bg-white active:cursor-grabbing"
-          : `w-full border border-line bg-[#efeae2] ${stage ? "h-[70vh] min-h-[32rem]" : "h-96"}`
-      }
+    <ModelBoundary
+      fallback={<VehicleSilhouette className={hero ? "h-full w-full" : stage ? "h-[70vh] min-h-[32rem]" : "h-96"} />}
     >
-      <Canvas
-        camera={{
-          position: hero ? [7.2, 1.7, 8.1] : stage ? [5.1, 1.9, 5.4] : [4.6, 1.75, 4.9],
-          fov: hero ? 26 : 30,
-        }}
-        dpr={[1, 1.5]}
-        gl={{ antialias: true }}
-        onCreated={({ gl }) => gl.setClearColor(hero ? 0xffffff : 0xefeae2, 1)}
+      <div
+        role={hero ? "application" : undefined}
+        aria-label={hero ? "Car model turning slowly. Drag to rotate." : undefined}
+        className={
+          hero
+            ? "h-full w-full cursor-grab bg-white active:cursor-grabbing"
+            : `w-full border border-line bg-[#efeae2] ${stage ? "h-[70vh] min-h-[32rem]" : "h-96"}`
+        }
       >
-        <color attach="background" args={[hero ? "#ffffff" : "#efeae2"]} />
-        <hemisphereLight args={["#e7f2f4", "#2e3440", 0.85]} />
-        <ambientLight intensity={0.45} />
-        <directionalLight position={[6, 8, 4]} intensity={1.45} />
-        <directionalLight position={[-4, 3, -2]} intensity={0.35} />
-        <Suspense fallback={null}>
-          <Car paint={paint} frame={frame} />
-        </Suspense>
-        <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
-          <circleGeometry args={[hero ? 3.15 : stage ? 3.4 : 2.8, 64]} />
-          <meshStandardMaterial color={hero ? "#d4d4d4" : "#d7d1c7"} />
-        </mesh>
-        <OrbitControls
-          autoRotate={spin}
-          autoRotateSpeed={1.5}
-          enablePan={false}
-          enableZoom={!hero}
-          enableRotate
-          target={[0, hero ? 1.05 : stage ? 0.7 : 0.6, 0]}
-        />
-      </Canvas>
-    </div>
+        <Canvas
+          camera={{
+            position: hero ? [7.2, 1.7, 8.1] : stage ? [5.1, 1.9, 5.4] : [4.6, 1.75, 4.9],
+            fov: hero ? 26 : 30,
+          }}
+          dpr={[1, 1.5]}
+          gl={{ antialias: true }}
+          onCreated={({ gl }) => gl.setClearColor(hero ? 0xffffff : 0xefeae2, 1)}
+        >
+          <color attach="background" args={[hero ? "#ffffff" : "#efeae2"]} />
+          <hemisphereLight args={["#e7f2f4", "#2e3440", 0.85]} />
+          <ambientLight intensity={0.45} />
+          <directionalLight position={[6, 8, 4]} intensity={1.45} />
+          <directionalLight position={[-4, 3, -2]} intensity={0.35} />
+          <Suspense fallback={null}>
+            <Car paint={paint} frame={frame} />
+          </Suspense>
+          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.02, 0]}>
+            <circleGeometry args={[hero ? 3.15 : stage ? 3.4 : 2.8, 64]} />
+            <meshStandardMaterial color={hero ? "#d4d4d4" : "#d7d1c7"} />
+          </mesh>
+          <OrbitControls
+            autoRotate={spin}
+            autoRotateSpeed={1.5}
+            enablePan={false}
+            enableZoom={!hero}
+            enableRotate
+            target={[0, hero ? 1.05 : stage ? 0.7 : 0.6, 0]}
+          />
+        </Canvas>
+      </div>
+    </ModelBoundary>
   );
 }
