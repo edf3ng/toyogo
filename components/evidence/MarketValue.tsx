@@ -28,7 +28,7 @@ function MarketLoading() {
 
   return (
     <div className="mt-6 border-t border-line pt-4">
-      <h2 className="text-lg font-semibold">Market check</h2>
+      <h2 className="text-lg font-semibold">Market price</h2>
       <p className="mt-1 flex items-baseline justify-between gap-3 text-sm text-muted">
         <span aria-live="polite">{waitingLine(seconds)}</span>
         <span className="tabular-nums">{seconds}s</span>
@@ -99,7 +99,7 @@ export function MarketValue({
   const here = state.curve.find((p) => p.modelYear === year);
   return (
     <div className="mt-6 border-t border-line pt-4">
-      <h2 className="text-lg font-semibold">Market check</h2>
+      <h2 className="text-lg font-semibold">Market price</h2>
       <p className="mt-1 text-sm text-muted">From Google results (KBB, Edmunds, CarGurus), read by Gemini. Not a quote.</p>
       <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
         <div>
