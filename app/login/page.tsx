@@ -17,7 +17,7 @@ export default function LoginPage() {
       marker="Niagara Falls"
       kicker="Stop"
       title="Log in"
-      image={{ src: "/images/niagara.jpeg", alt: "Niagara Falls" }}
+      image={{ src: "/images/niagara.png", alt: "Niagara Falls" }}
     >
       <p className="mt-2 text-sm text-muted">
         Log in to retrieve your saved Toyota and preferences.
