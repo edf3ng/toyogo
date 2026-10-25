@@ -3,6 +3,7 @@
 import { CONDITION_CENTS } from "@/config/valuation";
 import { formatDollars } from "@/lib/format";
 import { recommendSwitch } from "@/lib/engine/switch";
+import { MarketValue } from "@/components/evidence/MarketValue";
 import type { SavedTrip } from "@/lib/trip";
 
 const ISSUE_LABEL: Record<string, string> = {
@@ -41,6 +42,7 @@ export function TradeInPanel({ trip }: { trip: SavedTrip }) {
       ) : (
         <p className="mt-4 text-sm text-muted">No condition notes were checked.</p>
       )}
+      <MarketValue year={car.year} model={car.model} miles={car.miles} issues={issues} />
       {trip.agreementName ? (
         <p className="mt-3 text-sm">
           Agreement on this browser only: {trip.agreementName}. The numbers above use what you typed.
