@@ -13,7 +13,12 @@ export default function LoginPage() {
   const [error, setError] = useState("");
 
   return (
-    <Landmark marker="Trail register" kicker="Stop" title="Log in">
+    <Landmark
+      marker="Niagara Falls"
+      kicker="Stop"
+      title="Log in"
+      image={{ src: "/images/niagara.jpeg", alt: "Niagara Falls" }}
+    >
       <p className="mt-2 text-sm text-muted">
         Demo sign-in — no account is created and nothing is stored. Any password is accepted, then
         discarded.
