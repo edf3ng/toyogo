@@ -10,6 +10,7 @@ import { BODY_MATERIAL_NAME } from "@/config/vehicles";
 
 const CAMRY_URL = "/models/camry.glb?v=2";
 const BZ4X_URL = "/models/bz4x.glb?v=3";
+const COROLLA_HYBRID_URL = "/models/corolla-hybrid.glb?v=1";
 const MODEL_URL = CAMRY_URL;
 const DRACO_PATH = "/draco/";
 useGLTF.setDecoderPath(DRACO_PATH);
@@ -21,11 +22,12 @@ const WINDOW_WIDTH = 9;
 
 useGLTF.preload(CAMRY_URL);
 useGLTF.preload(BZ4X_URL, DRACO_PATH);
+useGLTF.preload(COROLLA_HYBRID_URL, DRACO_PATH);
 
-const GLASS = /glass|window/i;
+const GLASS = /glass|window|vidro/i;
 
 function isBodyPaint(name: string): boolean {
-  return name === BODY_MATERIAL_NAME || /paint|carbody|bodypaint|car_paint|exterior/i.test(name);
+  return name === BODY_MATERIAL_NAME || /paint|carbody|bodypaint|car_paint|exterior|pintura/i.test(name);
 }
 
 function Car({ paint, frame, modelUrl }: { paint: string; frame: "trip" | "stage" | "hero"; modelUrl: string }) {

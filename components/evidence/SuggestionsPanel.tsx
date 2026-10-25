@@ -6,7 +6,8 @@ import { ChargingPanel } from "@/components/evidence/ChargingPanel";
 import { ImpactPanel } from "@/components/evidence/ImpactPanel";
 import { SavingsPanel } from "@/components/evidence/SavingsPanel";
 import { ScoreBars } from "@/components/ScoreBars";
-import { formatDollars, formatNumber } from "@/lib/format";
+import { formatDollars, formatNumber, formatPercent } from "@/lib/format";
+import { switchWorth } from "@/lib/engine/energy";
 import type { RankedSwitch, SwitchResult } from "@/lib/engine/switch";
 import type { ExplainFacts } from "@/lib/explain";
 import type { SavedTrip } from "@/lib/trip";
@@ -28,18 +29,32 @@ const POWERTRAIN_LABEL: Record<RankedSwitch["powertrain"], string> = {
 
 const PLACE = ["first", "second", "third"];
 
-function paybackLabel(months: number): string {
-  if (!Number.isFinite(months)) return "Fuel savings alone don't cover the payment increase";
-  if (months <= 0) return "The payment is not higher than today";
-  return `${Math.round(months)} months`;
+function paybackLabel(option: RankedSwitch): string {
+  const worth = switchWorth(option);
+  if (worth.extraMonthlyCents <= 0) return "The payment is not higher than today";
+  if (option.monthlyEnergySavingCents <= 0) return "Fuel does not fall, so it does not offset the extra payment";
+  if (worth.netMonthlyCents <= 0 && Number.isFinite(worth.paybackMonths)) {
+    return `${Math.round(worth.paybackMonths)} months for fuel savings to cover the extra payment`;
+  }
+  if (worth.fuelCoversShare === null) return "Fuel savings alone don't cover the extra payment";
+  return `Fuel covers ${formatPercent(worth.fuelCoversShare)} of each extra payment, so the extra payment does not pay back from fuel alone`;
 }
 
-function switchTrade(keep: RankedSwitch, option: RankedSwitch): string {
-  const extraFive = option.fiveYearCents - keep.fiveYearCents;
-  if (extraFive <= 0) {
-    return `Five-year outlay is ${formatDollars(option.fiveYearCents)}, ${formatDollars(Math.abs(extraFive))} less than keeping this car.`;
+function worthCopy(option: RankedSwitch): string {
+  const worth = switchWorth(option);
+  if (worth.extraMonthlyCents <= 0) {
+    return `The example payment is not higher than today. Fuel still ${
+      worth.annualFuelSaveCents >= 0 ? "saves" : "costs"
+    } ${formatDollars(Math.abs(worth.annualFuelSaveCents))} a year.`;
   }
-  return `Five-year outlay is ${formatDollars(option.fiveYearCents)} versus ${formatDollars(keep.fiveYearCents)} to keep driving. That gap is the new-car payment. The switch is the cheaper fuel and the cleaner tailpipe.`;
+  if (worth.fuelCoversShare === null) {
+    return `The extra payment is ${formatDollars(worth.extraMonthlyCents)}/mo.`;
+  }
+  const share = formatPercent(worth.fuelCoversShare);
+  if (worth.netMonthlyCents <= 0) {
+    return `Fuel saves ${formatDollars(option.monthlyEnergySavingCents)}/mo and more than covers the extra ${formatDollars(worth.extraMonthlyCents)}/mo payment. You are ${formatDollars(Math.abs(worth.netMonthlyCents))}/mo ahead after fuel. Over 5 years, fuel saves ${formatDollars(worth.fiveYearFuelCents)} against ${formatDollars(worth.fiveYearExtraCents)} of extra payments.`;
+  }
+  return `Fuel saves ${formatDollars(option.monthlyEnergySavingCents)}/mo, which is ${share} of the extra ${formatDollars(worth.extraMonthlyCents)}/mo payment. After fuel, the switch costs ${formatDollars(worth.netMonthlyCents)}/mo. Over 5 years, fuel saves ${formatDollars(worth.fiveYearFuelCents)} against ${formatDollars(worth.fiveYearExtraCents)} of extra payments.`;
 }
 
 function scoreSentence(option: RankedSwitch, rank: number, count: number): string {
@@ -132,6 +147,7 @@ export function SuggestionsPanel({
   const suggestion = { id: option.id, label: option.label, powertrain: option.powertrain };
   const priorities = trip.input.priorities.map((key) => PRIORITY_COPY[key]).join(", ");
   const rank = index + 1;
+  const worth = switchWorth(option);
 
   return (
     <div>
@@ -184,51 +200,29 @@ export function SuggestionsPanel({
           </p>
         </div>
       </div>
-      <p className="mt-3 text-sm">{switchTrade(result.keep, option)}</p>
-      <table className="mt-4 w-full text-sm">
-        <caption className="sr-only">
-          Keep the {result.keep.year} {result.keep.model} versus {option.label}
-        </caption>
-        <thead>
-          <tr className="text-left">
-            <th className="w-[28%] pb-2 font-normal text-muted" scope="col">
-              A year of
-            </th>
-            <th className="pb-2 pr-2 font-medium" scope="col">
-              Keep {result.keep.year} {result.keep.model}
-            </th>
-            <th className="pb-2 font-medium" scope="col">
-              Switch to {option.label}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr className="border-t border-line">
-            <th className="py-2 font-normal text-muted" scope="row">
-              Payment
-            </th>
-            <td className="py-2 pr-2">{formatDollars(result.keep.paymentCents)}/mo</td>
-            <td className="py-2 font-medium">{formatDollars(option.paymentCents)}/mo</td>
-          </tr>
-          <tr className="border-t border-line">
-            <th className="py-2 font-normal text-muted" scope="row">
-              Fuel
-            </th>
-            <td className="py-2 pr-2">{formatDollars(result.keep.annualEnergyCents)}</td>
-            <td className="py-2 font-medium">{formatDollars(option.annualEnergyCents)}</td>
-          </tr>
-          <tr className="border-t border-line">
-            <th className="py-2 font-normal text-muted" scope="row">
-              Tailpipe CO2
-            </th>
-            <td className="py-2 pr-2">{formatNumber(Math.round(result.keep.annualCo2Lbs))} lb</td>
-            <td className="py-2 font-medium">{formatNumber(Math.round(option.annualCo2Lbs))} lb</td>
-          </tr>
-        </tbody>
-      </table>
+      <div className="mt-3 grid grid-cols-2 gap-3">
+        <div className="border border-line bg-white p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">Extra payment</p>
+          <p className="mt-1 text-3xl font-semibold tracking-tight">
+            {formatDollars(Math.max(0, worth.extraMonthlyCents))}/mo
+          </p>
+          <p className="text-sm">above today to switch</p>
+        </div>
+        <div className="border border-line bg-white p-3">
+          <p className="text-xs font-medium uppercase tracking-wide text-muted">Fuel covers</p>
+          <p className="mt-1 text-3xl font-semibold tracking-tight">
+            {worth.fuelCoversShare === null ? "—" : formatPercent(worth.fuelCoversShare)}
+          </p>
+          <p className="text-sm">
+            of that extra payment
+            {worth.extraMonthlyCents > 0 ? `, net ${formatDollars(worth.netMonthlyCents)}/mo after fuel` : ""}
+          </p>
+        </div>
+      </div>
+      <p className="mt-3 text-sm">{worthCopy(option)}</p>
       <p className="mt-3 text-sm">
         <span className="text-muted">Payback from fuel savings. </span>
-        {paybackLabel(option.paybackMonths)}.
+        {paybackLabel(option)}.
       </p>
       {option.negativeEquity ? (
         <p className="mt-3 text-sm">
