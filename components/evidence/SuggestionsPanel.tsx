@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PRIORITY_COPY } from "@/config/priorities";
 import { Swap } from "@/components/appear";
 import { ChargingPanel } from "@/components/evidence/ChargingPanel";
@@ -9,6 +9,8 @@ import { SavingsPanel } from "@/components/evidence/SavingsPanel";
 import { ScoreBars } from "@/components/ScoreBars";
 import { formatDollars, formatNumber, formatPercent } from "@/lib/format";
 import { switchWorth } from "@/lib/engine/energy";
+import { ToyotaMark } from "@/components/ToyotaMark";
+import { buyInventoryUrl } from "@/lib/shop";
 import type { RankedSwitch, SwitchResult } from "@/lib/engine/switch";
 import type { ExplainFacts } from "@/lib/explain";
 import type { SavedTrip } from "@/lib/trip";
@@ -35,6 +37,111 @@ const VERDICT_LABEL: Record<RankedSwitch["verdict"], string> = {
 };
 
 const PLACE = ["first", "second", "third"];
+
+function CarPicker({
+  options,
+  index,
+  onChange,
+}: {
+  options: RankedSwitch[];
+  index: number;
+  onChange: (index: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const current = options[index];
+
+  useEffect(() => {
+    if (!open) return;
+    function close(event: Event) {
+      if (event.target instanceof Node && !root.current?.contains(event.target)) setOpen(false);
+    }
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape") setOpen(false);
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        onChange(Math.min(options.length - 1, index + 1));
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        onChange(Math.max(0, index - 1));
+      }
+    }
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open, index, options.length, onChange]);
+
+  if (!current) return null;
+
+  return (
+    <div ref={root} className="relative">
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label="Suggested car"
+        className="flex w-full items-center gap-3 rounded-md border border-line bg-white px-3 py-2.5 text-left hover:border-jade"
+        onClick={() => setOpen((value) => !value)}
+      >
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-jade text-sm font-semibold text-white">
+          {index + 1}
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block font-medium">{current.label}</span>
+          <span className="block text-xs text-muted">
+            {POWERTRAIN_LABEL[current.powertrain]} · {VERDICT_LABEL[current.verdict]}
+          </span>
+        </span>
+        <span aria-hidden="true" className="text-muted">
+          {open ? "▴" : "▾"}
+        </span>
+      </button>
+      {open ? (
+        <ul
+          role="listbox"
+          aria-label="Suggested cars"
+          className="absolute z-20 mt-1 w-full overflow-hidden rounded-md border border-line bg-white shadow-lg"
+        >
+          {options.map((item, itemIndex) => {
+            const selected = itemIndex === index;
+            return (
+              <li key={item.id} role="option" aria-selected={selected}>
+                <button
+                  type="button"
+                  className={`flex w-full items-center gap-3 px-3 py-2.5 text-left ${
+                    selected ? "bg-paper" : "hover:bg-paper"
+                  }`}
+                  onClick={() => {
+                    onChange(itemIndex);
+                    setOpen(false);
+                  }}
+                >
+                  <span
+                    className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-sm font-semibold ${
+                      selected ? "bg-jade text-white" : "border border-line text-ink"
+                    }`}
+                  >
+                    {itemIndex + 1}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium">{item.label}</span>
+                    <span className="block text-xs text-muted">
+                      {POWERTRAIN_LABEL[item.powertrain]} · {VERDICT_LABEL[item.verdict]}
+                    </span>
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      ) : null}
+    </div>
+  );
+}
 
 function paybackLabel(option: RankedSwitch): string {
   const worth = switchWorth(option);
@@ -158,36 +265,37 @@ export function SuggestionsPanel({
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight">Suggestions</h1>
-      <p className="mt-1 text-sm text-muted">Ranked from your priorities. The score picks the car.</p>
-      <div className="mt-4 flex flex-wrap gap-2" role="tablist" aria-label="Suggested cars">
-        {options.map((item, itemIndex) => {
-          const selected = item.id === option.id;
-          return (
-            <button
-              key={item.id}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              className={`rounded-md border px-3 py-2 text-left text-sm ${
-                selected ? "border-jade bg-jade text-white" : "border-line bg-white text-ink"
-              }`}
-              onClick={() => setIndex(itemIndex)}
-            >
-              <span className="block font-medium">{item.label}</span>
-              <span className={`block text-xs ${selected ? "text-white/80" : "text-muted"}`}>
-                Ranked {itemIndex + 1} · {VERDICT_LABEL[item.verdict]}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <CarPicker options={options} index={index} onChange={setIndex} />
       <Swap id={option.id}>
-      <p className="mt-5 flex flex-wrap items-baseline gap-x-2 text-sm">
+      <p className="mt-4 text-sm">
         <span className="text-jade-800">{POWERTRAIN_LABEL[option.powertrain]}</span>
+        {" · "}
         <span>{VERDICT_LABEL[option.verdict]}</span>
+        {" · "}
+        <span className="text-muted">
+          Ranked {rank} of {options.length}
+        </span>
       </p>
       <h2 className="text-2xl font-semibold tracking-tight">{option.label}</h2>
+      <a
+        href={buyInventoryUrl(option.model, option.label, trip.zip)}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-3 flex items-center gap-3 rounded-md border border-line bg-white px-3 py-2.5 hover:border-jade hover:bg-paper"
+      >
+        <span className="flex h-12 w-[4.75rem] shrink-0 items-center justify-center">
+          <ToyotaMark className="h-11 w-[4.5rem] object-contain" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-medium">Find one to buy</span>
+          <span className="block text-xs text-muted">
+            Toyota inventory{trip.zip ? ` near ${trip.zip}` : ""}. Opens in a new tab.
+          </span>
+        </span>
+        <span aria-hidden="true" className="text-jade-800">
+          ↗
+        </span>
+      </a>
       <div className="mt-4 grid grid-cols-2 gap-3">
         <div className="border border-line bg-white p-3">
           <p className="text-xs font-medium uppercase tracking-wide text-muted">Fuel if you switch</p>
