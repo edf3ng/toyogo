@@ -2,8 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { PresentationControls, useGLTF, useTexture } from "@react-three/drei";
-import { Canvas, useThree } from "@react-three/fiber";
-import { Suspense, useLayoutEffect, useMemo } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import { Suspense, useEffect, useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import * as THREE from "three";
 import { COPY } from "@/config/copy";
 import { BODY_MATERIAL_NAME } from "@/config/vehicles";
@@ -76,6 +76,38 @@ function Car() {
   return <primitive object={scene} />;
 }
 
+function Turntable({ children }: { children: ReactNode }) {
+  const group = useRef<THREE.Group>(null);
+  const dragging = useRef(false);
+  const reduce = useRef(false);
+  const canvas = useThree((state) => state.gl.domElement);
+
+  useEffect(() => {
+    reduce.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const start = () => {
+      dragging.current = true;
+    };
+    const stop = () => {
+      dragging.current = false;
+    };
+    canvas.addEventListener("pointerdown", start);
+    window.addEventListener("pointerup", stop);
+    window.addEventListener("pointercancel", stop);
+    return () => {
+      canvas.removeEventListener("pointerdown", start);
+      window.removeEventListener("pointerup", stop);
+      window.removeEventListener("pointercancel", stop);
+    };
+  }, [canvas]);
+
+  useFrame((_, delta) => {
+    if (reduce.current || dragging.current || !group.current) return;
+    group.current.rotation.y += delta * 0.16;
+  });
+
+  return <group ref={group}>{children}</group>;
+}
+
 function GarageWindows() {
   const image = useTexture(WINDOW_IMAGE);
   const texture = useMemo(() => {
@@ -100,7 +132,7 @@ function HomeScene() {
   return (
     <div
       role="application"
-      aria-label="Car model. Drag to rotate."
+      aria-label="Car model turning slowly. Drag to rotate."
       className="h-full w-full cursor-grab bg-white active:cursor-grabbing"
     >
       <Canvas
@@ -119,7 +151,9 @@ function HomeScene() {
         <directionalLight position={[-4, 3, -2]} intensity={0.35} />
         <Suspense fallback={null}>
           <PresentationControls global polar={[0, 0]} speed={2}>
-            <Car />
+            <Turntable>
+              <Car />
+            </Turntable>
           </PresentationControls>
         </Suspense>
         <Suspense fallback={null}>
