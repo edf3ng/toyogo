@@ -1,25 +1,25 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PRIORITY_COPY, PRIORITY_KEYS, type PriorityKey } from "@/config/priorities";
 import { PAINTS } from "@/config/vehicles";
 import { Field, SelectInput, TextInput } from "@/components/Field";
 import { Landmark } from "@/components/Landmark";
-import { writeDriver } from "@/lib/driver";
+import { loadAccount, saveAccount } from "@/lib/account";
 import { monthlyPaymentCents, remainingBalanceCents } from "@/lib/engine/finance";
 import { ownershipAgeYears, valueVehicle } from "@/lib/engine/valuation";
 import { formatDollars } from "@/lib/format";
 import { garageCar, garageMsrpCents, garageYears, modelsForYear } from "@/lib/garage";
 import type { ChargeAccess } from "@/lib/engine/energy";
-import { buildTrip, writeTrip } from "@/lib/trip";
+import { buildTrip } from "@/lib/trip";
 
 const STOPS = [
-  { kicker: "Stop 1", marker: "New York", title: "Your account", image: { src: "/images/nyc.jpeg", alt: "Illustration of New York City" } },
-  { kicker: "Stop 2", marker: "Chicago", title: "Where you drive", image: { src: "/images/chicago.jpeg", alt: "Illustration of the Chicago skyline" } },
-  { kicker: "Stop 3", marker: "Mt. Rushmore", title: "Your Toyota", image: { src: "/images/mtrushmore.jpeg", alt: "Illustration of Mount Rushmore" } },
-  { kicker: "Stop 4", marker: "Grand Canyon", title: "How you paid", image: { src: "/images/grandcanyon.jpg", alt: "Illustration of the Grand Canyon" } },
-  { kicker: "Stop 5", marker: "Golden Gate Bridge", title: "What matters", image: { src: "/images/goldengate.jpg", alt: "Illustration of the Golden Gate Bridge" } },
+  { kicker: "Stop 1", marker: "New York", title: "Your account", image: { src: "/images/nyc.png", alt: "Illustration of New York City" } },
+  { kicker: "Stop 2", marker: "Chicago", title: "Where you drive", image: { src: "/images/chicago.png", alt: "Illustration of the Chicago skyline" } },
+  { kicker: "Stop 3", marker: "Mt. Rushmore", title: "Your Toyota", image: { src: "/images/mtrushmore.png", alt: "Illustration of Mount Rushmore" } },
+  { kicker: "Stop 4", marker: "Grand Canyon", title: "How you paid", image: { src: "/images/grandcanyon.png", alt: "Illustration of the Grand Canyon" } },
+  { kicker: "Stop 5", marker: "Golden Gate Bridge", title: "What matters", image: { src: "/images/goldengate.png", alt: "Illustration of the Golden Gate Bridge" } },
 ] as const;
 
 const ISSUE_OPTIONS = [
@@ -45,6 +45,11 @@ export function SignupWizard() {
   const years = garageYears();
   const first = modelsForYear(2019).find((row) => row.model === "Corolla") ?? modelsForYear(years[0])[0];
   const [step, setStep] = useState(0);
+  const [customizing, setCustomizing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadFailed, setLoadFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
   const [email, setEmail] = useState("Toyogo@gmail.com");
   const [username, setUsername] = useState("Toyogo123");
   const [password, setPassword] = useState("Toyoyo");
@@ -71,6 +76,70 @@ export function SignupWizard() {
   const [daily, setDaily] = useState("30");
   const [priorities, setPriorities] = useState<PriorityKey[]>([...PRIORITY_KEYS]);
   const [other, setOther] = useState("");
+
+  useEffect(() => {
+    const controller = new AbortController();
+    async function restore() {
+      const account = await loadAccount(controller.signal);
+      if (controller.signal.aborted || !account) return;
+      const { driver, trip: saved } = account;
+      setEmail(driver.email);
+      setUsername(driver.name);
+      const { input, signupValues: values } = saved;
+      const contract = input.contract;
+      setCustomizing(true);
+      setPassword("");
+      setZip(saved.zip);
+      setCharge(input.chargeAccess);
+      setYear(input.current.year);
+      setCarId(input.current.id);
+      setMiles(values?.miles ?? String(input.current.miles));
+      setPaint(saved.paint);
+      setFinance(contract.kind);
+      setAcquired(values?.acquired ?? saved.acquired ?? "used");
+      if (values) {
+        setPurchasedOn(values.purchasedOn);
+        setStartedOn(values.startedOn);
+        setPrincipal(values.principal);
+        setApr(values.apr);
+        setTerm(values.term);
+        setRemaining(values.remaining);
+        setPayment(values.payment);
+        setPayoff(values.payoff);
+      } else {
+        if (contract.kind === "owned") {
+          setPurchasedOn(saved.purchasedOn);
+        } else {
+          setStartedOn(saved.purchasedOn);
+          setTerm(String(contract.months));
+          setRemaining(String(Math.max(0, contract.months - contract.monthsElapsed)));
+          if (contract.kind === "loan") {
+            setPrincipal(String(contract.principalCents / 100));
+            setApr(String(Number((contract.annualRate * 100).toFixed(6))));
+          } else {
+            setPrincipal(String(contract.capCostCents / 100));
+            setApr(String(Number((contract.moneyFactor * 24 * 100).toFixed(6))));
+            setPayoff(String(contract.payoffCents / 100));
+          }
+        }
+        setPayment(input.statedPaymentCents === undefined ? "" : String(input.statedPaymentCents / 100));
+      }
+      setIssues([...(input.issues ?? [])]);
+      setAgreementName(saved.agreementName);
+      setBudget(values?.budget ?? String(input.budgetCents / 100));
+      setDaily(values?.daily ?? String(input.dailyMiles));
+      setPriorities([...input.priorities]);
+      setOther(saved.other);
+    }
+    restore().catch((error: unknown) => {
+      if (controller.signal.aborted) return;
+      setLoadFailed(true);
+      setError(error instanceof Error ? error.message : "Could not load your account.");
+    }).finally(() => {
+      if (!controller.signal.aborted) setLoading(false);
+    });
+    return () => controller.abort();
+  }, []);
 
   const models = modelsForYear(year);
   const car = models.find((row) => row.id === carId) ?? models[0] ?? garageCar(carId);
@@ -112,37 +181,52 @@ export function SignupWizard() {
     setIssues((current) => (current.includes(id) ? current.filter((item) => item !== id) : [...current, id]));
   }
 
-  function finish() {
-    const months = Number(term) || 60;
-    const left = Number(remaining) || 0;
-    const saved = buildTrip({
-      name: username.trim(),
-      zip: zip.trim(),
-      car,
-      miles: Number(miles) || 0,
-      finance,
-      monthsElapsed: Math.max(0, months - left),
-      loanMonths: months,
-      apr: rate(apr),
-      principalCents: dollars(principal),
-      payoffCents: dollars(payoff),
-      statedPaymentCents: dollars(payment),
-      budgetCents: dollars(budget),
-      charge,
-      dailyMiles: Number(daily) || 0,
-      priorities,
-      paint,
-      other,
-      issues,
-      acquired: finance === "owned" ? acquired : null,
-      purchasedOn: finance === "owned" ? purchasedOn : startedOn,
-      agreementName,
-    });
-    setVin("");
-    setPassword("");
-    writeDriver({ name: username.trim(), email: email.trim() });
-    writeTrip(saved);
-    router.push("/dashboard");
+  async function finish() {
+    if (saving) return;
+    setSaving(true);
+    setError("");
+    try {
+      const months = Number(term) || 60;
+      const left = Number(remaining) || 0;
+      const saved = buildTrip({
+        name: username.trim(),
+        zip: zip.trim(),
+        car,
+        miles: Number(miles) || 0,
+        finance,
+        monthsElapsed: Math.max(0, months - left),
+        loanMonths: months,
+        apr: rate(apr),
+        principalCents: dollars(principal),
+        payoffCents: dollars(payoff),
+        statedPaymentCents: dollars(payment),
+        budgetCents: dollars(budget),
+        charge,
+        dailyMiles: Number(daily) || 0,
+        priorities,
+        paint,
+        other,
+        issues,
+        acquired: finance === "owned" ? acquired : null,
+        purchasedOn: finance === "owned" ? purchasedOn : startedOn,
+        agreementName,
+      });
+      const trip = {
+        ...saved,
+        signupValues: {
+          miles, principal, startedOn, apr, term, remaining, payment, payoff,
+          budget, daily, acquired, purchasedOn,
+        },
+      };
+      await saveAccount({ email, username, password, trip }, customizing);
+      setVin("");
+      setPassword("");
+      router.push("/dashboard");
+    } catch (error) {
+      setError(error instanceof Error ? error.message : "Could not save your account. Please try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   const stop = STOPS[step];
@@ -153,6 +237,16 @@ export function SignupWizard() {
         Stop {step + 1} of {STOPS.length}
       </p>
 
+      {loading || loadFailed ? (
+        <div className="mt-5 text-sm" role="status">
+          {loading ? "Loading your account…" : (
+            <>
+              <p role="alert">{error}</p>
+              <button type="button" className="mt-3 text-jade-800 underline" onClick={() => window.location.reload()}>Try again</button>
+            </>
+          )}
+        </div>
+      ) : <>
       {step === 0 ? (
         <form
           id="signup-account"
@@ -183,12 +277,13 @@ export function SignupWizard() {
               onChange={(event) => setUsername(event.target.value)}
             />
           </Field>
-          <Field label="Password">
+          <Field label="Password" hint={customizing ? "Leave blank to keep your current password." : undefined}>
             <TextInput
               type="password"
               name="password"
               autoComplete="new-password"
-              required
+              required={!customizing}
+              maxLength={128}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
@@ -257,7 +352,7 @@ export function SignupWizard() {
           <Field label="Current mileage">
             <TextInput inputMode="numeric" value={miles} onChange={(event) => setMiles(event.target.value)} />
           </Field>
-          <Field label="VIN, optional" hint="Used only on this step. It is not saved and it is not sent.">
+          <Field label="VIN, optional">
             <TextInput value={vin} autoComplete="off" onChange={(event) => setVin(event.target.value.toUpperCase())} />
           </Field>
         </div>
@@ -323,6 +418,7 @@ export function SignupWizard() {
                   className="block w-full text-sm"
                   onChange={(event) => setAgreementName(event.target.files?.[0]?.name ?? "")}
                 />
+                {agreementName ? <span className="mt-1 block text-sm text-muted">Saved filename: {agreementName}. Choose a file to replace it.</span> : null}
               </Field>
             </>
           ) : null}
@@ -413,10 +509,17 @@ export function SignupWizard() {
         </div>
       ) : null}
 
+      {error ? (
+        <div className="mt-4 text-sm">
+          <p role="alert">{error}</p>
+          {step > 0 ? <button type="button" className="mt-2 text-jade-800 underline" onClick={() => setStep(0)}>Edit account details</button> : null}
+        </div>
+      ) : null}
       <div className="mt-6 flex gap-3">
         {step > 0 ? (
           <button
             type="button"
+            disabled={saving}
             className="h-11 rounded-md border border-line px-4 text-sm"
             onClick={() => {
               setVin("");
@@ -442,13 +545,15 @@ export function SignupWizard() {
         ) : (
           <button
             type="button"
+            disabled={saving}
             className="h-11 rounded-md bg-jade px-4 text-sm font-medium text-white hover:bg-jade-800"
             onClick={finish}
           >
-            Start the drive
+            {saving ? "Saving…" : customizing ? "Save changes" : "Start the drive"}
           </button>
         )}
       </div>
+      </>}
     </Landmark>
   );
 }
