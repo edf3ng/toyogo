@@ -15,11 +15,11 @@ import type { ChargeAccess } from "@/lib/engine/energy";
 import { buildTrip } from "@/lib/trip";
 
 const STOPS = [
-  { kicker: "Stop 1", marker: "New York", title: "Your account", image: { src: "/images/nyc.jpeg", alt: "Illustration of New York City" } },
-  { kicker: "Stop 2", marker: "Chicago", title: "Where you drive", image: { src: "/images/chicago.jpeg", alt: "Illustration of the Chicago skyline" } },
-  { kicker: "Stop 3", marker: "Mt. Rushmore", title: "Your Toyota", image: { src: "/images/mtrushmore.jpeg", alt: "Illustration of Mount Rushmore" } },
-  { kicker: "Stop 4", marker: "Grand Canyon", title: "How you paid", image: { src: "/images/grandcanyon.jpg", alt: "Illustration of the Grand Canyon" } },
-  { kicker: "Stop 5", marker: "Golden Gate Bridge", title: "What matters", image: { src: "/images/goldengate.jpg", alt: "Illustration of the Golden Gate Bridge" } },
+  { kicker: "Stop 1", marker: "New York", title: "Your account", image: { src: "/images/nyc.png", alt: "Illustration of New York City" } },
+  { kicker: "Stop 2", marker: "Chicago", title: "Where you drive", image: { src: "/images/chicago.png", alt: "Illustration of the Chicago skyline" } },
+  { kicker: "Stop 3", marker: "Mt. Rushmore", title: "Your Toyota", image: { src: "/images/mtrushmore.png", alt: "Illustration of Mount Rushmore" } },
+  { kicker: "Stop 4", marker: "Grand Canyon", title: "How you paid", image: { src: "/images/grandcanyon.png", alt: "Illustration of the Grand Canyon" } },
+  { kicker: "Stop 5", marker: "Golden Gate Bridge", title: "What matters", image: { src: "/images/goldengate.png", alt: "Illustration of the Golden Gate Bridge" } },
 ] as const;
 
 const ISSUE_OPTIONS = [

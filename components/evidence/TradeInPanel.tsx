@@ -4,6 +4,7 @@ import { CONDITION_CENTS } from "@/config/valuation";
 import { formatDollars } from "@/lib/format";
 import { recommendSwitch } from "@/lib/engine/switch";
 import { MarketValue } from "@/components/evidence/MarketValue";
+import { NextVehicle } from "@/components/evidence/NextVehicle";
 import type { SavedTrip } from "@/lib/trip";
 
 const ISSUE_LABEL: Record<string, string> = {
@@ -56,6 +57,7 @@ export function TradeInPanel({ trip }: { trip: SavedTrip }) {
             : `Equity: ${formatDollars(result.equityCents)}.`}
         </p>
       </div>
+      <NextVehicle input={trip.input} />
       <h2 className="mt-6 text-lg font-semibold">Electrified options</h2>
       <ul className="mt-3 grid gap-3">
         {[result.winner, ...result.runners].map((option) => (
