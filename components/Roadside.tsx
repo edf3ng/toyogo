@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Swap } from "@/components/appear";
 import { SuggestionsPanel } from "@/components/evidence/SuggestionsPanel";
 import { TradeInPanel } from "@/components/evidence/TradeInPanel";
 import { HomeCar } from "@/components/HomeCar";
@@ -51,18 +52,24 @@ export function Roadside() {
       </div>
       <aside className="flex min-h-0 flex-col overflow-hidden border-l border-line bg-paper">
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-16 pb-6 lg:px-5">
-          {trip === undefined ? <p className="text-sm text-muted">Loading your car.</p> : null}
+          {trip === undefined ? (
+            <Swap id="loading">
+              <p className="text-sm text-muted">Loading your car.</p>
+            </Swap>
+          ) : null}
           {trip === null ? (
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight">No car on file yet</h1>
-              <p className="mt-3 text-sm">Sign up with your Toyota and the tabs fill in beside the car.</p>
-              <Link
-                href="/signup"
-                className="mt-4 inline-flex h-11 items-center rounded-md bg-jade px-4 text-sm font-medium text-white"
-              >
-                Sign up
-              </Link>
-            </div>
+            <Swap id="empty">
+              <div>
+                <h1 className="text-2xl font-semibold tracking-tight">No car on file yet</h1>
+                <p className="mt-3 text-sm">Sign up with your Toyota and the tabs fill in beside the car.</p>
+                <Link
+                  href="/signup"
+                  className="mt-4 inline-flex h-11 items-center rounded-md bg-jade px-4 text-sm font-medium text-white"
+                >
+                  Sign up
+                </Link>
+              </div>
+            </Swap>
           ) : null}
           {trip && result ? (
             <>
@@ -90,15 +97,17 @@ export function Roadside() {
                 })}
               </div>
               <div className="mt-5">
-                {page === "analytics" ? (
-                  <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
-                    <p className="mt-1 text-sm text-muted">Trade-in and market price for the car you have now.</p>
-                    <TradeInPanel trip={trip} />
-                  </div>
-                ) : (
-                  <SuggestionsPanel trip={trip} result={result} onSelect={setPicked} />
-                )}
+                <Swap id={page}>
+                  {page === "analytics" ? (
+                    <div>
+                      <h1 className="text-2xl font-semibold tracking-tight">Analytics</h1>
+                      <p className="mt-1 text-sm text-muted">Trade-in and market price for the car you have now.</p>
+                      <TradeInPanel trip={trip} />
+                    </div>
+                  ) : (
+                    <SuggestionsPanel trip={trip} result={result} onSelect={setPicked} />
+                  )}
+                </Swap>
               </div>
             </>
           ) : null}
