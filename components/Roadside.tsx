@@ -7,17 +7,13 @@ import { SuggestionsPanel } from "@/components/evidence/SuggestionsPanel";
 import { TradeInPanel } from "@/components/evidence/TradeInPanel";
 import { HomeCar } from "@/components/HomeCar";
 import { recommendSwitch, type RankedSwitch } from "@/lib/engine/switch";
+import { MODEL_URLS, suggestionModelUrl } from "@/lib/models";
 import { readTrip, type SavedTrip } from "@/lib/trip";
 import { ACCOUNT_CHANGED } from "@/lib/account";
 
-const CAMRY_MODEL = "/models/camry.glb?v=2";
-const BZ4X_MODEL = "/models/bz4x.glb?v=3";
-
 function modelFor(option: RankedSwitch | null, page: "analytics" | "suggestions"): string {
-  if (page === "suggestions" && option && /bz4x|\bbz\b/i.test(`${option.model} ${option.label}`)) {
-    return BZ4X_MODEL;
-  }
-  return CAMRY_MODEL;
+  if (page === "suggestions" && option) return suggestionModelUrl(option.model, option.label);
+  return MODEL_URLS.camry;
 }
 
 const PAGES = [
