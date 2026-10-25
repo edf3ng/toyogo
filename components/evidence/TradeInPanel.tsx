@@ -25,7 +25,7 @@ export function TradeInPanel({ trip }: { trip: SavedTrip }) {
         {trip.acquired ? ` · acquired ${trip.acquired === "cpo" ? "certified pre-owned" : trip.acquired}` : ""}
         {trip.purchasedOn ? ` · ${trip.purchasedOn}` : ""}
       </p>
-      <p className="mt-4 text-sm text-muted">Estimated trade-in</p>
+      <h2 className="mt-4 text-lg font-semibold">Trade-in</h2>
       <p className="text-4xl font-semibold tracking-tight">{formatDollars(result.valuation.tradeInCents)}</p>
       <p className="mt-2 text-sm">
         Modelled range {formatDollars(result.valuation.retailLowCents)} to{" "}
