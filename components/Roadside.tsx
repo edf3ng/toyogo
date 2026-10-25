@@ -8,13 +8,13 @@ import { SuggestionsPanel } from "@/components/evidence/SuggestionsPanel";
 import { TradeInPanel } from "@/components/evidence/TradeInPanel";
 import { HomeCar } from "@/components/HomeCar";
 import { recommendSwitch, type RankedSwitch } from "@/lib/engine/switch";
-import { MODEL_URLS, suggestionModelUrl } from "@/lib/models";
+import { suggestionModelUrl } from "@/lib/models";
 import { readTrip, type SavedTrip } from "@/lib/trip";
 import { ACCOUNT_CHANGED } from "@/lib/account";
 
-function modelFor(option: RankedSwitch | null, page: "analytics" | "suggestions"): string {
+function modelFor(option: RankedSwitch | null, page: "analytics" | "suggestions", trip: SavedTrip | null | undefined): string {
   if (page === "suggestions" && option) return suggestionModelUrl(option.model, option.label);
-  return MODEL_URLS.camry;
+  return suggestionModelUrl(trip?.input.current.model ?? "Camry", "");
 }
 
 const PAGES = [
@@ -48,7 +48,7 @@ export function Roadside() {
   return (
     <section className="grid h-dvh grid-rows-[minmax(16rem,42vh)_minmax(0,1fr)] lg:grid-cols-[minmax(0,1.15fr)_minmax(22rem,0.9fr)] lg:grid-rows-1">
       <div className="relative min-h-0 overflow-hidden bg-white">
-        <HomeCar paint={trip?.paint} modelUrl={modelFor(picked, page)} />
+        <HomeCar paint={trip?.paint} modelUrl={modelFor(picked, page, trip)} />
       </div>
       <aside className="flex min-h-0 flex-col overflow-hidden border-l border-line bg-paper">
         <div className="min-h-0 flex-1 overflow-y-auto px-4 pt-16 pb-6 lg:px-5">
