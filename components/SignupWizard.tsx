@@ -1,18 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { PRIORITY_COPY, PRIORITY_KEYS, type PriorityKey } from "@/config/priorities";
 import { PAINTS } from "@/config/vehicles";
 import { Field, SelectInput, TextInput } from "@/components/Field";
 import { Landmark } from "@/components/Landmark";
-import { writeDriver } from "@/lib/driver";
+import { readDriver, writeDriver } from "@/lib/driver";
 import { monthlyPaymentCents, remainingBalanceCents } from "@/lib/engine/finance";
 import { ownershipAgeYears, valueVehicle } from "@/lib/engine/valuation";
 import { formatDollars } from "@/lib/format";
 import { garageCar, garageMsrpCents, garageYears, modelsForYear } from "@/lib/garage";
 import type { ChargeAccess } from "@/lib/engine/energy";
-import { buildTrip, writeTrip } from "@/lib/trip";
+import { buildTrip, readTrip, writeTrip } from "@/lib/trip";
 
 const STOPS = [
   { kicker: "Stop 1", marker: "New York", title: "Your account", image: { src: "/images/nyc.jpeg", alt: "Illustration of New York City" } },
@@ -45,6 +45,7 @@ export function SignupWizard() {
   const years = garageYears();
   const first = modelsForYear(2019).find((row) => row.model === "Corolla") ?? modelsForYear(years[0])[0];
   const [step, setStep] = useState(0);
+  const [customizing, setCustomizing] = useState(false);
   const [email, setEmail] = useState("Toyogo@gmail.com");
   const [username, setUsername] = useState("Toyogo123");
   const [password, setPassword] = useState("Toyoyo");
@@ -71,6 +72,61 @@ export function SignupWizard() {
   const [daily, setDaily] = useState("30");
   const [priorities, setPriorities] = useState<PriorityKey[]>([...PRIORITY_KEYS]);
   const [other, setOther] = useState("");
+
+  useEffect(() => {
+    const driver = readDriver();
+    if (!driver) return;
+    setEmail(driver.email);
+    setUsername(driver.name);
+
+    const saved = readTrip();
+    if (!saved) return;
+    const { input, signupValues: values } = saved;
+    const contract = input.contract;
+    setCustomizing(true);
+    setPassword("");
+    setZip(saved.zip);
+    setCharge(input.chargeAccess);
+    setYear(input.current.year);
+    setCarId(input.current.id);
+    setMiles(values?.miles ?? String(input.current.miles));
+    setPaint(saved.paint);
+    setFinance(contract.kind);
+    setAcquired(values?.acquired ?? saved.acquired ?? "used");
+    if (values) {
+      setPurchasedOn(values.purchasedOn);
+      setStartedOn(values.startedOn);
+      setPrincipal(values.principal);
+      setApr(values.apr);
+      setTerm(values.term);
+      setRemaining(values.remaining);
+      setPayment(values.payment);
+      setPayoff(values.payoff);
+    } else {
+      if (contract.kind === "owned") {
+        setPurchasedOn(saved.purchasedOn);
+      } else {
+        setStartedOn(saved.purchasedOn);
+        setTerm(String(contract.months));
+        setRemaining(String(Math.max(0, contract.months - contract.monthsElapsed)));
+        if (contract.kind === "loan") {
+          setPrincipal(String(contract.principalCents / 100));
+          setApr(String(Number((contract.annualRate * 100).toFixed(6))));
+        } else {
+          setPrincipal(String(contract.capCostCents / 100));
+          setApr(String(Number((contract.moneyFactor * 24 * 100).toFixed(6))));
+          setPayoff(String(contract.payoffCents / 100));
+        }
+      }
+      setPayment(input.statedPaymentCents === undefined ? "" : String(input.statedPaymentCents / 100));
+    }
+    setIssues([...(input.issues ?? [])]);
+    setAgreementName(saved.agreementName);
+    setBudget(values?.budget ?? String(input.budgetCents / 100));
+    setDaily(values?.daily ?? String(input.dailyMiles));
+    setPriorities([...input.priorities]);
+    setOther(saved.other);
+  }, []);
 
   const models = modelsForYear(year);
   const car = models.find((row) => row.id === carId) ?? models[0] ?? garageCar(carId);
@@ -141,7 +197,13 @@ export function SignupWizard() {
     setVin("");
     setPassword("");
     writeDriver({ name: username.trim(), email: email.trim() });
-    writeTrip(saved);
+    writeTrip({
+      ...saved,
+      signupValues: {
+        miles, principal, startedOn, apr, term, remaining, payment, payoff,
+        budget, daily, acquired, purchasedOn,
+      },
+    });
     router.push("/dashboard");
   }
 
@@ -188,7 +250,7 @@ export function SignupWizard() {
               type="password"
               name="password"
               autoComplete="new-password"
-              required
+              required={!customizing}
               value={password}
               onChange={(event) => setPassword(event.target.value)}
             />
@@ -323,6 +385,7 @@ export function SignupWizard() {
                   className="block w-full text-sm"
                   onChange={(event) => setAgreementName(event.target.files?.[0]?.name ?? "")}
                 />
+                {agreementName ? <span className="mt-1 block text-sm text-muted">Saved filename: {agreementName}. Choose a file to replace it.</span> : null}
               </Field>
             </>
           ) : null}
