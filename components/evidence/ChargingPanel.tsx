@@ -73,9 +73,8 @@ export function ChargingPanel({
   return (
     <div>
       <p className="text-sm text-muted">
-        Pins near {center.place}. Radius {miles} miles. Charger data © Open Charge Map contributors, CC BY 4.0. Map
-        tiles © OpenStreetMap.
-        {source === "cache" ? " This view is the saved Austin sample." : ""}
+        Near {center.place}, {miles} mi radius.
+        {source === "cache" ? " Saved Austin sample." : ""}
       </p>
       <label className="mt-4 block text-sm font-medium">
         Radius, {miles} miles
