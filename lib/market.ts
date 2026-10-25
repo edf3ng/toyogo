@@ -23,8 +23,10 @@ async function serpSearch(query: string, key: string): Promise<Snippet[]> {
   const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
   if (!response.ok) throw new Error(`serpapi ${response.status}`);
   const payload = (await response.json()) as {
+    error?: string;
     organic_results?: { title?: string; snippet?: string; source?: string; displayed_link?: string; link?: string }[];
   };
+  if (payload.error) throw new Error(`serpapi ${payload.error}`);
   return (payload.organic_results ?? []).slice(0, 6).map((row) => ({
     title: (row.title ?? "").slice(0, 120),
     snippet: (row.snippet ?? "").slice(0, 300),
@@ -90,17 +92,19 @@ export async function marketValue(q: MarketQuery, serpKey: string, geminiKey: st
       .map((y) => ({ label: `curve ${y}`, q: `${y} ${car} used price average` })),
   ];
   // One failed search should cost its own year, not the whole valuation.
+  const failures: string[] = [];
   const settled = await Promise.all(
     queries.map(async (item) => {
       try {
         return { ...item, rows: await serpSearch(item.q, serpKey) };
-      } catch {
+      } catch (error) {
+        failures.push(error instanceof Error ? error.message : "search failed");
         return null;
       }
     }),
   );
   const results = settled.filter((row): row is NonNullable<typeof row> => row !== null && row.rows.length > 0);
-  if (results.length === 0) throw new Error("no search results");
+  if (results.length === 0) throw new Error(failures[0] ?? "no search results");
 
   const prompt = [
     "You value a used car from Google search results only. Use KBB, Edmunds, CarGurus and listing snippets.",
