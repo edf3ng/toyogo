@@ -29,7 +29,7 @@ useGLTF.preload(COROLLA_HYBRID_URL, DRACO_PATH);
 const GLASS = /glass|window|vidro/i;
 
 function isBodyPaint(name: string): boolean {
-  return name === BODY_MATERIAL_NAME || /paint|carbody|bodypaint|car_paint|exterior|pintura/i.test(name);
+  return name === BODY_MATERIAL_NAME || /paint|carbody|bodypaint|car_paint|exterior|pintura|sienna.*super_white/i.test(name);
 }
 
 function Car({ paint, frame, modelUrl }: { paint: string; frame: "trip" | "stage" | "hero"; modelUrl: string }) {
@@ -58,7 +58,7 @@ function Car({ paint, frame, modelUrl }: { paint: string; frame: "trip" | "stage
       const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
       for (const material of materials) {
         const surface = material as THREE.MeshPhysicalMaterial;
-        const glass = GLASS.test(material.name);
+        const glass = GLASS.test(material.name) && !/trim/i.test(material.name);
         const glow = /glow/i.test(material.name);
         if ("emissive" in surface) {
           surface.emissive.set(glow ? "#fff1d0" : "#000000");
@@ -224,6 +224,7 @@ export default function VehicleViewer({
 
   return (
     <ModelBoundary
+      key={modelUrl}
       fallback={<VehicleSilhouette className={hero ? "h-full w-full" : stage ? "h-[70vh] min-h-[32rem]" : "h-96"} />}
     >
       <div
