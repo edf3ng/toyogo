@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Stagger } from "@/components/appear";
 import { Field, TextInput } from "@/components/Field";
 import { Landmark } from "@/components/Landmark";
 import { login } from "@/lib/account";
@@ -23,7 +24,7 @@ export default function LoginPage() {
         Log in to retrieve your saved Toyota and preferences.
       </p>
       <form
-        className="mt-5 grid gap-4"
+        className="mt-5"
         onSubmit={async (event) => {
           event.preventDefault();
           if (submitting) return;
@@ -42,32 +43,34 @@ export default function LoginPage() {
           }
         }}
       >
-        <Field label="Email">
-          <TextInput
-            type="email"
-            name="email"
-            autoComplete="username"
-            required
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-          />
-        </Field>
-        <Field label="Password">
-          <TextInput type="password" name="password" autoComplete="current-password" required maxLength={128} />
-        </Field>
-        {error ? <p role="alert" className="text-sm">{error}</p> : null}
-        <div className="flex flex-wrap gap-3">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="h-11 rounded-md bg-jade px-4 text-sm font-medium text-white hover:bg-jade-800"
-          >
-            {submitting ? "Logging in…" : "Log in"}
-          </button>
-          <a href="/signup" className="inline-flex h-11 items-center text-sm font-medium text-jade-800">
-            Need an account? Sign up
-          </a>
-        </div>
+        <Stagger className="grid gap-4">
+          <Field label="Email">
+            <TextInput
+              type="email"
+              name="email"
+              autoComplete="username"
+              required
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+            />
+          </Field>
+          <Field label="Password">
+            <TextInput type="password" name="password" autoComplete="current-password" required maxLength={128} />
+          </Field>
+          {error ? <p role="alert" className="text-sm">{error}</p> : null}
+          <div className="flex flex-wrap gap-3">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="h-11 rounded-md bg-jade px-4 text-sm font-medium text-white hover:bg-jade-800"
+            >
+              {submitting ? "Logging in…" : "Log in"}
+            </button>
+            <a href="/signup" className="inline-flex h-11 items-center text-sm font-medium text-jade-800">
+              Need an account? Sign up
+            </a>
+          </div>
+        </Stagger>
       </form>
     </Landmark>
   );

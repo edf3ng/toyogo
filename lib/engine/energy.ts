@@ -118,3 +118,38 @@ export function paybackMonths(paymentDeltaCents: Cents, monthlyEnergySavingCents
   if (monthlyEnergySavingCents <= 0) return Number.POSITIVE_INFINITY;
   return paymentDeltaCents / monthlyEnergySavingCents;
 }
+
+export interface SwitchWorth {
+  annualFuelSaveCents: Cents;
+  extraMonthlyCents: Cents;
+  extraYearCents: Cents;
+  /** Fuel savings divided by the extra payment. Null when the payment does not rise. */
+  fuelCoversShare: number | null;
+  netMonthlyCents: Cents;
+  fiveYearFuelCents: Cents;
+  fiveYearExtraCents: Cents;
+  fiveYearNetCents: Cents;
+  paybackMonths: number;
+}
+
+/** How much of the extra new-car payment is covered by cheaper fuel. */
+export function switchWorth(input: {
+  paymentDeltaCents: Cents;
+  monthlyEnergySavingCents: Cents;
+}): SwitchWorth {
+  const extraMonthlyCents = input.paymentDeltaCents;
+  const annualFuelSaveCents = input.monthlyEnergySavingCents * 12;
+  const extraYearCents = extraMonthlyCents * 12;
+  const fuelCoversShare = extraMonthlyCents > 0 ? input.monthlyEnergySavingCents / extraMonthlyCents : null;
+  return {
+    annualFuelSaveCents,
+    extraMonthlyCents,
+    extraYearCents,
+    fuelCoversShare,
+    netMonthlyCents: extraMonthlyCents - input.monthlyEnergySavingCents,
+    fiveYearFuelCents: annualFuelSaveCents * 5,
+    fiveYearExtraCents: extraMonthlyCents * 60,
+    fiveYearNetCents: extraMonthlyCents * 60 - annualFuelSaveCents * 5,
+    paybackMonths: paybackMonths(extraMonthlyCents, input.monthlyEnergySavingCents),
+  };
+}
