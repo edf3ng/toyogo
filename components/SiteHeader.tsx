@@ -17,8 +17,8 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   return (
     <header className={`no-print z-30 ${overlay ? "absolute inset-x-0 top-0" : "border-b border-line bg-paper"}`}>
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="text-xl font-semibold tracking-tight text-ink">
-          ToyoGo
+        <Link href="/" aria-label="ToyoGo" className="inline-flex shrink-0 items-center">
+          <img src="/logo.png" alt="ToyoGo" width={852} height={253} className="h-11 w-auto sm:h-12" />
         </Link>
         <nav className="flex items-center gap-2 text-sm">
           {name ? <span className="hidden text-muted sm:inline">{name}</span> : null}
