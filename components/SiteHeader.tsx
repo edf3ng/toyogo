@@ -3,19 +3,33 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { clearDriver, readDriver } from "@/lib/driver";
+import { readDriver } from "@/lib/driver";
+import { ACCOUNT_CHANGED, loadAccount, logout } from "@/lib/account";
 
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const path = usePathname();
   const router = useRouter();
   const [name, setName] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [accountError, setAccountError] = useState("");
   const menuRef = useRef<HTMLElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setName(readDriver()?.name ?? null);
+    const sync = () => setName(readDriver()?.name ?? null);
+    const controller = new AbortController();
+    sync();
     setMenuOpen(false);
+    setAccountError("");
+    window.addEventListener(ACCOUNT_CHANGED, sync);
+    loadAccount(controller.signal).catch((error: unknown) => {
+      if (!controller.signal.aborted) setAccountError(error instanceof Error ? error.message : "Could not load your account.");
+    });
+    return () => {
+      controller.abort();
+      window.removeEventListener(ACCOUNT_CHANGED, sync);
+    };
   }, [path]);
 
   useEffect(() => {
@@ -73,17 +87,33 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
                   >
                     Analytics
                   </Link>
+                  <Link
+                    href="/signup"
+                    className="block px-4 py-2 text-ink hover:bg-paper focus-visible:bg-paper"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Customize
+                  </Link>
                   <button
                     type="button"
+                    disabled={signingOut}
                     className="block w-full px-4 py-2 text-left text-ink hover:bg-paper focus-visible:bg-paper"
-                    onClick={() => {
-                      clearDriver();
-                      setName(null);
-                      setMenuOpen(false);
-                      router.push("/");
+                    onClick={async () => {
+                      setSigningOut(true);
+                      setAccountError("");
+                      try {
+                        await logout();
+                        setName(null);
+                        setMenuOpen(false);
+                        router.push("/");
+                      } catch (error) {
+                        setAccountError(error instanceof Error ? error.message : "Could not sign out. Please try again.");
+                      } finally {
+                        setSigningOut(false);
+                      }
                     }}
                   >
-                    Sign out
+                    {signingOut ? "Signing out…" : "Sign out"}
                   </button>
                 </div>
               ) : null}
@@ -100,6 +130,7 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           )}
         </nav>
       </div>
+      {accountError ? <p role="alert" className="mx-auto max-w-6xl px-4 pb-2 text-sm">{accountError}</p> : null}
     </header>
   );
 }

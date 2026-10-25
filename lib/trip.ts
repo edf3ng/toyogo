@@ -16,6 +16,21 @@ export interface SavedTrip {
   purchasedOn: string;
   agreementName: string;
   input: SwitchInput;
+  /** Original form values that cannot always be reconstructed from the calculation inputs. */
+  signupValues?: {
+    miles: string;
+    principal: string;
+    startedOn: string;
+    apr: string;
+    term: string;
+    remaining: string;
+    payment: string;
+    payoff: string;
+    budget: string;
+    daily: string;
+    acquired: "new" | "cpo" | "used";
+    purchasedOn: string;
+  };
 }
 
 export function stateFromZip(zip: string): string {
