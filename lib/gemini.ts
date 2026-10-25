@@ -1,7 +1,7 @@
 const GEMINI = "https://generativelanguage.googleapis.com/v1beta/models";
 
 /** Models tried in turn when the configured one is overloaded. */
-const FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-2.5-flash"];
+const FALLBACK_MODELS = ["gemini-2.5-flash", "gemini-3.5-flash", "gemini-3.8-flash"];
 /** A loaded model has been seen to take over a minute to answer. */
 const ATTEMPT_TIMEOUT_MS = 100_000;
 /** Total budget for one call, across every retry and fallback. */
@@ -33,9 +33,11 @@ export async function generateJson(
   geminiKey: string,
   model: string,
   schema: unknown,
+  options?: { deadlineMs?: number; attemptTimeoutMs?: number },
 ): Promise<string> {
   const models = [model, ...FALLBACK_MODELS.filter((name) => name !== model)];
-  const giveUpAt = Date.now() + DEADLINE_MS;
+  const giveUpAt = Date.now() + (options?.deadlineMs ?? DEADLINE_MS);
+  const attemptTimeoutMs = options?.attemptTimeoutMs ?? ATTEMPT_TIMEOUT_MS;
   let last = new Error("gemini unreachable");
   // A model the key cannot use at all answers 404, so it is dropped rather than
   // tried again on every round.
@@ -49,7 +51,7 @@ export async function generateJson(
     try {
       const response = await fetch(`${GEMINI}/${name}:generateContent`, {
         method: "POST",
-        signal: AbortSignal.timeout(Math.min(ATTEMPT_TIMEOUT_MS, left)),
+        signal: AbortSignal.timeout(Math.min(attemptTimeoutMs, left)),
         headers: { "x-goog-api-key": geminiKey, "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
